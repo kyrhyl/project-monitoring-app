@@ -1,16 +1,34 @@
 # Project Monitoring App
 
-A lightweight project monitoring web application built with Next.js 14, TypeScript, Tailwind CSS, and MongoDB Atlas. Optimized for Vercel deployment.
+A lightweight project monitoring application built with Next.js, TypeScript, and MongoDB Atlas. Features role-based authentication, team management, and comprehensive project tracking.
 
-## Features
+## 🚀 **Features**
 
-- 📊 **Project Dashboard** - Overview of all projects with real-time statistics
-- 📝 **Project Management** - Create, edit, and delete projects
-- 🎯 **Task Tracking** - Organize tasks within projects
-- 📈 **Progress Monitoring** - Visual progress tracking for projects
-- 🎨 **Modern UI** - Clean and responsive design with Tailwind CSS
-- ⚡ **Fast Performance** - Serverless API routes with MongoDB Atlas
-- 🚀 **Vercel Ready** - Optimized for seamless Vercel deployment
+### **Authentication & Authorization**
+- Role-based access control (Admin, Team Leader, Member)
+- Secure JWT authentication with HTTP-only cookies
+- Protected routes and API endpoints
+
+### **User Management**
+- Admin dashboard for user CRUD operations
+- Role assignment and team management
+- User profile management
+
+### **Team Management**  
+- Create and manage teams
+- Assign team leaders and members
+- Team-based project access control
+
+### **Project Management**
+- Create, edit, and delete projects
+- Project status tracking (Planning, Active, Completed, On-Hold)
+- Priority levels and progress tracking
+- Team-based project assignment
+
+### **Dashboard & Analytics**
+- Real-time project statistics
+- Role-based data filtering
+- Responsive design with Tailwind CSS
 
 ## Tech Stack
 
