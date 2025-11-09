@@ -60,14 +60,6 @@ export default function AdminDashboard() {
     }
     setCurrentUser(user);
   };
-    }
-    
-    const user = JSON.parse(userStr);
-    if (user.role !== 'admin') {
-      router.push('/dashboard');
-      return;
-    }
-  };
 
   const fetchUsers = async () => {
     try {
