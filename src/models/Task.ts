@@ -1,5 +1,18 @@
 import mongoose from 'mongoose';
 
+export interface IAttachment {
+  _id?: string;
+  filename: string;
+  originalName: string;
+  cloudinaryId: string;
+  url: string;
+  mimetype: string;
+  size: number;
+  uploadedBy: mongoose.Types.ObjectId;
+  uploadedAt: Date;
+  description?: string;
+}
+
 export interface ITask {
   _id?: string;
   title: string;
@@ -7,13 +20,28 @@ export interface ITask {
   status: 'todo' | 'in-progress' | 'completed';
   priority: 'low' | 'medium' | 'high';
   projectId: mongoose.Types.ObjectId;
-  assignee?: string;
+  assigneeId?: mongoose.Types.ObjectId; // User ObjectId instead of string
+  assigneeName?: string; // Keep for backward compatibility and display
+  attachments?: IAttachment[]; // File attachments
   dueDate?: Date;
   estimatedHours?: number;
   actualHours?: number;
+  createdBy: mongoose.Types.ObjectId; // Who created the task
   createdAt: Date;
   updatedAt: Date;
 }
+
+const AttachmentSchema = new mongoose.Schema<IAttachment>({
+  filename: { type: String, required: true },
+  originalName: { type: String, required: true },
+  cloudinaryId: { type: String, required: true },
+  url: { type: String, required: true },
+  mimetype: { type: String, required: true },
+  size: { type: Number, required: true },
+  uploadedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  uploadedAt: { type: Date, default: Date.now },
+  description: { type: String, default: '' }
+});
 
 const TaskSchema = new mongoose.Schema<ITask>({
   title: {
@@ -44,11 +72,16 @@ const TaskSchema = new mongoose.Schema<ITask>({
     ref: 'Project',
     required: [true, 'Project ID is required']
   },
-  assignee: {
+  assigneeId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
+  assigneeName: {
     type: String,
     trim: true,
     maxLength: [100, 'Assignee name cannot exceed 100 characters']
   },
+  attachments: [AttachmentSchema],
   dueDate: {
     type: Date
   },
@@ -61,6 +94,11 @@ const TaskSchema = new mongoose.Schema<ITask>({
     type: Number,
     min: [0, 'Actual hours cannot be negative'],
     max: [1000, 'Actual hours cannot exceed 1000']
+  },
+  createdBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: [true, 'Created by is required']
   }
 }, {
   timestamps: true
@@ -68,5 +106,7 @@ const TaskSchema = new mongoose.Schema<ITask>({
 
 // Index for efficient queries
 TaskSchema.index({ projectId: 1, status: 1 });
+TaskSchema.index({ assigneeId: 1, status: 1 });
+TaskSchema.index({ projectId: 1, assigneeId: 1 });
 
 export default mongoose.models.Task || mongoose.model<ITask>('Task', TaskSchema);

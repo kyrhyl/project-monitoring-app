@@ -4,5 +4,6 @@
 import User from './User';
 import Team from './Team';
 import Project from './Project';
+import Task from './Task';
 
-export { User, Team, Project };
+export { User, Team, Project, Task };

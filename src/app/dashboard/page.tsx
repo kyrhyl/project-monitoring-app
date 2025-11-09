@@ -6,6 +6,7 @@ import { IProject } from '@/models/Project';
 import DashboardStats from '@/components/DashboardStats';
 import ProjectCard from '@/components/ProjectCard';
 import ProjectForm from '@/components/ProjectForm';
+import Calendar from '@/components/Calendar';
 import ModernNavigation from '@/components/ui/ModernNavigation';
 import { ModernCard, StatsCard, ActionButton } from '@/components/ui/ModernCards';
 
@@ -19,9 +20,24 @@ interface User {
   teamName?: string;
 }
 
+interface Task {
+  _id: string;
+  title: string;
+  description: string;
+  status: 'todo' | 'in-progress' | 'completed';
+  priority: 'low' | 'medium' | 'high';
+  projectId: {
+    _id: string;
+    name: string;
+  };
+  dueDate?: Date;
+  estimatedHours?: number;
+}
+
 export default function Dashboard() {
-  const [activeTab, setActiveTab] = useState<'overview' | 'projects'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'projects' | 'tasks' | 'calendar'>('overview');
   const [projects, setProjects] = useState<IProject[]>([]);
+  const [myTasks, setMyTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingProject, setEditingProject] = useState<IProject | null>(null);
@@ -31,6 +47,7 @@ export default function Dashboard() {
   useEffect(() => {
     checkAuth();
     fetchProjects();
+    fetchMyTasks();
   }, []);
 
   const checkAuth = () => {
@@ -47,6 +64,11 @@ export default function Dashboard() {
       const response = await fetch('/api/projects', {
         credentials: 'include' // Include cookies for authentication
       });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       const data = await response.json();
       if (data.success) {
         setProjects(data.data);
@@ -57,6 +79,26 @@ export default function Dashboard() {
       console.error('Error fetching projects:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchMyTasks = async () => {
+    try {
+      const response = await fetch('/api/tasks?assignedToMe=true', {
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        setMyTasks(data.data || []);
+      }
+    } catch (error) {
+      console.error('Error fetching my tasks:', error);
     }
   };
 
@@ -73,6 +115,10 @@ export default function Dashboard() {
         credentials: 'include', // Include cookies for authentication
         body: JSON.stringify(projectData),
       });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
 
       const data = await response.json();
       if (data.success) {
@@ -96,12 +142,17 @@ export default function Dashboard() {
           method: 'DELETE',
         });
 
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
         const data = await response.json();
         if (data.success) {
           await fetchProjects();
         }
       } catch (error) {
         console.error('Error deleting project:', error);
+        alert('Failed to delete project. Please try again.');
       }
     }
   };
@@ -138,6 +189,25 @@ export default function Dashboard() {
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 9a2 2 0 00-2 2v2m0 0V9a2 2 0 012-2h14a2 2 0 012 2v2M7 7V5a2 2 0 012-2h6a2 2 0 012 2v2" />
+        </svg>
+      )
+    },
+    {
+      id: 'tasks',
+      label: 'My Tasks',
+      count: myTasks.filter(t => t.status !== 'completed').length,
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+        </svg>
+      )
+    },
+    {
+      id: 'calendar',
+      label: 'Calendar',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
         </svg>
       )
     }
@@ -202,7 +272,7 @@ export default function Dashboard() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
                 }
-                label="管理パネル • Admin Panel"
+                label="Admin Panel"
               />
             )}
             <ActionButton
@@ -215,7 +285,7 @@ export default function Dashboard() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                 </svg>
               }
-              label="新しいプロジェクト • New Project"
+              label="New Project"
             />
           </div>
         </div>
@@ -269,12 +339,12 @@ export default function Dashboard() {
             {/* Recent Projects */}
             <ModernCard>
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-slate-900">最近のプロジェクト • Recent Projects</h2>
+                <h2 className="text-2xl font-bold text-black">Recent Projects</h2>
                 <button 
                   onClick={() => setActiveTab('projects')}
                   className="text-red-600 hover:text-red-800 font-medium text-sm flex items-center"
                 >
-                  すべて見る • View all projects
+                  View all projects
                   <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
@@ -283,12 +353,13 @@ export default function Dashboard() {
               {projects.slice(0, 3).length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {projects.slice(0, 3).map((project) => (
-                    <ProjectCard
-                      key={project._id}
-                      project={project}
-                      onEdit={handleEdit}
-                      onDelete={handleDelete}
-                    />
+                    <div key={project._id} onClick={() => router.push(`/projects/${project._id}`)} className="cursor-pointer">
+                      <ProjectCard
+                        project={project}
+                        onEdit={handleEdit}
+                        onDelete={handleDelete}
+                      />
+                    </div>
                   ))}
                 </div>
               ) : (
@@ -298,7 +369,7 @@ export default function Dashboard() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 9a2 2 0 00-2 2v2m0 0V9a2 2 0 012-2h14a2 2 0 012 2v2M7 7V5a2 2 0 012-2h6a2 2 0 012 2v2" />
                     </svg>
                   </div>
-                  <h3 className="text-lg font-semibold text-slate-900 mb-2">プロジェクトがありません • No projects yet</h3>
+                  <h3 className="text-lg font-semibold text-black mb-2">No projects yet</h3>
                   <p className="text-stone-600 mb-6">Create your first project to get started with monitoring!</p>
                   <ActionButton
                     onClick={() => {
@@ -310,7 +381,7 @@ export default function Dashboard() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                       </svg>
                     }
-                    label="初回プロジェクトを作成 • Create Your First Project"
+                    label="Create Your First Project"
                   />
                 </div>
               )}
@@ -320,7 +391,7 @@ export default function Dashboard() {
           /* Projects Tab */
           <ModernCard>
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-slate-900">すべてのプロジェクト • All Projects</h2>
+              <h2 className="text-2xl font-bold text-black">All Projects</h2>
               <ActionButton
                 onClick={() => {
                   setEditingProject(null);
@@ -331,18 +402,19 @@ export default function Dashboard() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                   </svg>
                 }
-                label="プロジェクトを追加 • Add Project"
+                label="Add Project"
               />
             </div>
             {projects.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {projects.map((project) => (
-                  <ProjectCard
-                    key={project._id}
-                    project={project}
-                    onEdit={handleEdit}
-                    onDelete={handleDelete}
-                  />
+                  <div key={project._id} onClick={() => router.push(`/projects/${project._id}`)} className="cursor-pointer">
+                    <ProjectCard
+                      project={project}
+                      onEdit={handleEdit}
+                      onDelete={handleDelete}
+                    />
+                  </div>
                 ))}
               </div>
             ) : (
@@ -352,8 +424,8 @@ export default function Dashboard() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 9a2 2 0 00-2 2v2m0 0V9a2 2 0 012-2h14a2 2 0 012 2v2M7 7V5a2 2 0 012-2h6a2 2 0 012 2v2" />
                   </svg>
                 </div>
-                <h3 className="text-lg font-semibold text-slate-900 mb-2">プロジェクトがありません • No projects yet</h3>
-                <p className="text-stone-600 mb-6">Create your first project to get started with monitoring!</p>
+                <h3 className="text-lg font-semibold text-black mb-2">No projects yet</h3>
+                <p className="text-gray-600 mb-6">Create your first project to get started with monitoring!</p>
                 <ActionButton
                   onClick={() => {
                     setEditingProject(null);
@@ -364,11 +436,96 @@ export default function Dashboard() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                     </svg>
                   }
-                  label="初回プロジェクトを作成 • Create Your First Project"
+                  label="Create Your First Project"
                 />
               </div>
             )}
           </ModernCard>
+        )}
+
+        {/* My Tasks Tab */}
+        {activeTab === 'tasks' && (
+          <ModernCard>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-black">My Tasks</h2>
+              <div className="text-sm text-gray-500">
+                {myTasks.filter(t => t.status !== 'completed').length} pending
+              </div>
+            </div>
+            
+            {myTasks.length > 0 ? (
+              <div className="space-y-4">
+                {myTasks.map((task) => (
+                  <div key={task._id} className="border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2 mb-2">
+                          <h4 className="font-medium text-gray-900">{task.title}</h4>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            task.priority === 'high' ? 'bg-red-100 text-red-800' :
+                            task.priority === 'medium' ? 'bg-amber-100 text-amber-800' :
+                            'bg-green-100 text-green-800'
+                          }`}>
+                            {task.priority}
+                          </span>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            task.status === 'completed' ? 'bg-green-100 text-green-800' :
+                            task.status === 'in-progress' ? 'bg-blue-100 text-blue-800' :
+                            'bg-gray-100 text-gray-800'
+                          }`}>
+                            {task.status}
+                          </span>
+                        </div>
+                        
+                        <p className="text-sm text-gray-600 mb-2">{task.description}</p>
+                        
+                        <div className="flex items-center space-x-4 text-xs text-gray-500">
+                          <span>
+                            Project: <strong 
+                              onClick={() => router.push(`/projects/${task.projectId._id}`)} 
+                              className="text-amber-600 hover:text-amber-800 cursor-pointer"
+                            >
+                              {task.projectId.name}
+                            </strong>
+                          </span>
+                          {task.dueDate && (
+                            <span>
+                              Due: <strong>{new Date(task.dueDate).toLocaleDateString()}</strong>
+                            </span>
+                          )}
+                          {task.estimatedHours && (
+                            <span>
+                              Est: <strong>{task.estimatedHours}h</strong>
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <button
+                        onClick={() => router.push(`/projects/${task.projectId._id}?tab=tasks`)}
+                        className="text-amber-600 hover:text-amber-800 text-sm font-medium ml-4"
+                      >
+                        View
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                </svg>
+                <h3 className="text-lg font-semibold text-black mb-2">No tasks assigned</h3>
+                <p className="text-gray-600">Tasks assigned to you will appear here</p>
+              </div>
+            )}
+          </ModernCard>
+        )}
+
+        {/* Calendar Tab */}
+        {activeTab === 'calendar' && (
+          <Calendar />
         )}
 
         {/* Project Form Modal */}

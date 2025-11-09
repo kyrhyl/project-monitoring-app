@@ -77,6 +77,14 @@ export async function PUT(
       );
     }
     
+    // Only admin and team_leader can update projects
+    if (currentUser.role === 'member') {
+      return NextResponse.json(
+        { success: false, error: 'Permission denied. Only admins and team leaders can update projects.' },
+        { status: 403 }
+      );
+    }
+    
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json(
         { success: false, error: 'Invalid project ID' },
@@ -84,12 +92,68 @@ export async function PUT(
       );
     }
     
-    const body = await request.json();
+    const updateData = await request.json();
+    
+    // Validate required fields
+    if (!updateData.name || !updateData.description || !updateData.startDate) {
+      return NextResponse.json(
+        { success: false, error: 'Name, description, and start date are required' },
+        { status: 400 }
+      );
+    }
+    
+    // Validate date logic
+    if (updateData.endDate && new Date(updateData.endDate) <= new Date(updateData.startDate)) {
+      return NextResponse.json(
+        { success: false, error: 'End date must be after start date' },
+        { status: 400 }
+      );
+    }
+    
+    // Validate progress
+    if (updateData.progress !== undefined && (updateData.progress < 0 || updateData.progress > 100)) {
+      return NextResponse.json(
+        { success: false, error: 'Progress must be between 0 and 100' },
+        { status: 400 }
+      );
+    }
+
+    // Validate approved budget
+    if (updateData.approvedBudgetContract !== undefined && updateData.approvedBudgetContract < 0) {
+      return NextResponse.json(
+        { success: false, error: 'Approved budget cannot be negative' },
+        { status: 400 }
+      );
+    }
+    
     const project = await Project.findByIdAndUpdate(
       id,
-      body,
-      { new: true, runValidators: true }
-    );
+      {
+        $set: {
+          name: updateData.name.trim(),
+          description: updateData.description.trim(),
+          status: updateData.status,
+          priority: updateData.priority,
+          startDate: new Date(updateData.startDate),
+          endDate: updateData.endDate ? new Date(updateData.endDate) : null,
+          progress: updateData.progress,
+          contractId: updateData.contractId?.trim() || null,
+          contractName: updateData.contractName?.trim() || null,
+          appropriation: updateData.appropriation?.trim() || null,
+          location: updateData.location?.trim() || null,
+          approvedBudgetContract: updateData.approvedBudgetContract || null,
+          contractDuration: updateData.contractDuration?.trim() || null,
+          updatedAt: new Date()
+        }
+      },
+      { 
+        new: true,
+        runValidators: true
+      }
+    )
+      .populate('teamId', 'name')
+      .populate('createdBy', 'username firstName lastName')
+      .lean();
     
     if (!project) {
       return NextResponse.json(
@@ -100,7 +164,8 @@ export async function PUT(
     
     return NextResponse.json({ 
       success: true, 
-      data: project 
+      data: project,
+      message: 'Project updated successfully' 
     });
   } catch (error: any) {
     if (error.name === 'ValidationError') {

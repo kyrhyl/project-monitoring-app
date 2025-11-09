@@ -1,33 +1,43 @@
 # Project Monitoring App
 
-A lightweight project monitoring application built with Next.js, TypeScript, and MongoDB Atlas. Features role-based authentication, team management, and comprehensive project tracking.
+A comprehensive team management and project monitoring application built with Next.js, TypeScript, and MongoDB Atlas. Features advanced role-based authentication, team management, task assignment, and project tracking capabilities.
 
 ## 🚀 **Features**
 
 ### **Authentication & Authorization**
 - Role-based access control (Admin, Team Leader, Member)
 - Secure JWT authentication with HTTP-only cookies
-- Protected routes and API endpoints
+- Protected routes and API endpoints with granular permissions
 
-### **User Management**
+### **Advanced User Management**
 - Admin dashboard for user CRUD operations
 - Role assignment and team management
-- User profile management
+- User profile management with team associations
 
-### **Team Management**  
-- Create and manage teams
-- Assign team leaders and members
-- Team-based project access control
+### **Comprehensive Team Management**  
+- Create and manage teams with designated leaders
+- Assign specific team members to individual projects
+- Dynamic team member management per project
+- Team-based project access control with member-level permissions
 
-### **Project Management**
-- Create, edit, and delete projects
+### **Enhanced Project Management**
+- Create, edit, and delete projects with team assignments
 - Project status tracking (Planning, Active, Completed, On-Hold)
 - Priority levels and progress tracking
-- Team-based project assignment
+- Project-specific team member management
+- Detailed project views with tabbed interface
 
-### **Dashboard & Analytics**
-- Real-time project statistics
-- Role-based data filtering
+### **Advanced Task Assignment System** ⭐ NEW
+- Task creation and assignment by team leaders
+- Comprehensive task properties (priority, due dates, estimated hours)
+- Task status management (To Do, In Progress, Completed)
+- Member task updates and progress tracking
+- Project-integrated task management
+
+### **Enhanced Dashboard & Analytics**
+- Real-time project statistics and team performance
+- Personal "My Tasks" view for team members
+- Role-based data filtering and access control
 - Responsive design with Tailwind CSS
 
 ## Tech Stack
@@ -79,15 +89,33 @@ npx vercel --prod
 ## API Endpoints
 
 ### Projects
-- `GET /api/projects` - Fetch all projects
+- `GET /api/projects` - Fetch all projects (role-filtered)
 - `POST /api/projects` - Create new project
-- `GET /api/projects/[id]` - Get specific project
+- `GET /api/projects/[id]` - Get specific project details
 - `PUT /api/projects/[id]` - Update project
 - `DELETE /api/projects/[id]` - Delete project
 
-### Tasks
-- `GET /api/tasks` - Fetch tasks (optional project filter)
-- `POST /api/tasks` - Create new task
+### Project Team Management ⭐ NEW
+- `GET /api/projects/[id]/members` - Get project members and available team members
+- `POST /api/projects/[id]/members` - Add team members to project
+- `DELETE /api/projects/[id]/members?memberId=X` - Remove member from project
+
+### Task Management ⭐ NEW
+- `GET /api/projects/[id]/tasks` - Fetch all tasks for a project
+- `POST /api/projects/[id]/tasks` - Create new task with assignment
+- `GET /api/projects/[id]/tasks/[taskId]` - Get specific task details
+- `PUT /api/projects/[id]/tasks/[taskId]` - Update task (status, assignment, etc.)
+- `DELETE /api/projects/[id]/tasks/[taskId]` - Delete task
+
+### User & Authentication
+- `GET /api/auth/user` - Get current user details with team info
+- `GET /api/tasks?assignedToMe=true` - Fetch tasks assigned to current user
+
+### Teams & Users
+- `GET /api/teams` - Fetch all teams (admin only)
+- `POST /api/teams` - Create new team (admin only)
+- `GET /api/users` - Fetch all users (admin only)
+- `POST /api/users` - Create new user (admin only)
 
 ## MongoDB Atlas Setup
 

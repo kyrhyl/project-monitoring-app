@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Task from '@/models/Task';
+import AuthUtils from '@/lib/auth/utils';
 
 // GET - Fetch tasks with optional project filter
 export async function GET(request: NextRequest) {
@@ -8,14 +9,30 @@ export async function GET(request: NextRequest) {
     await dbConnect();
     const { searchParams } = new URL(request.url);
     const projectId = searchParams.get('projectId');
+    const assignedToMe = searchParams.get('assignedToMe');
     
-    let query = {};
+    const currentUser = AuthUtils.getUserFromRequest(request);
+    if (!currentUser) {
+      return NextResponse.json(
+        { success: false, error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    let query: any = {};
+    
     if (projectId) {
-      query = { projectId };
+      query.projectId = projectId;
+    }
+    
+    if (assignedToMe === 'true') {
+      query.assigneeId = currentUser.userId;
     }
     
     const tasks = await Task.find(query)
       .populate('projectId', 'name')
+      .populate('assigneeId', 'username firstName lastName')
+      .populate('createdBy', 'username firstName lastName')
       .select('title description status priority assignee dueDate estimatedHours actualHours')
       .sort({ createdAt: -1 })
       .lean();
