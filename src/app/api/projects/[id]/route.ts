@@ -94,6 +94,10 @@ export async function PUT(
     
     const updateData = await request.json();
     
+    // Debug logging
+    console.log('Update data received:', updateData);
+    console.log('Start date:', updateData.startDate, 'End date:', updateData.endDate);
+    
     // Validate required fields
     if (!updateData.name || !updateData.description || !updateData.startDate) {
       return NextResponse.json(
@@ -102,12 +106,37 @@ export async function PUT(
       );
     }
     
-    // Validate date logic
-    if (updateData.endDate && new Date(updateData.endDate) <= new Date(updateData.startDate)) {
-      return NextResponse.json(
-        { success: false, error: 'End date must be after start date' },
-        { status: 400 }
-      );
+    // Validate date logic - only if both dates are provided and valid
+    if (updateData.endDate && updateData.endDate !== null && updateData.endDate.trim() !== '') {
+      const startDate = new Date(updateData.startDate);
+      const endDate = new Date(updateData.endDate);
+      
+      console.log('Validating dates - Start:', updateData.startDate, 'End:', updateData.endDate);
+      console.log('Parsed start date:', startDate, 'Parsed end date:', endDate);
+      
+      if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+        return NextResponse.json(
+          { success: false, error: 'Invalid date format' },
+          { status: 400 }
+        );
+      }
+      
+      // Create date objects with just the date part (no time)
+      const startDateOnly = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+      const endDateOnly = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+      
+      console.log('Date comparison - Start:', startDateOnly, 'End:', endDateOnly);
+      console.log('End date after start?', endDateOnly > startDateOnly);
+      
+      if (endDateOnly <= startDateOnly) {
+        console.log('VALIDATION FAILED: End date not after start date');
+        return NextResponse.json(
+          { success: false, error: 'End date must be after start date' },
+          { status: 400 }
+        );
+      }
+      
+      console.log('Date validation passed');
     }
     
     // Validate progress

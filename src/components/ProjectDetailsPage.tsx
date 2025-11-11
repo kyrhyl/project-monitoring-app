@@ -108,6 +108,35 @@ const ProjectDetailsPage = ({ projectId }: ProjectDetailsProps) => {
 
   const canManageTeam = currentUser?.role === 'admin' || currentUser?.role === 'team_leader';
 
+  const handleDeleteProject = async () => {
+    if (!project?._id) return;
+    
+    // Show confirmation dialog
+    const confirmed = window.confirm(
+      `Are you sure you want to delete the project "${project.name}"? This action cannot be undone.`
+    );
+    
+    if (!confirmed) return;
+    
+    try {
+      const response = await fetch(`/api/projects/${project._id}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete project');
+      }
+      
+      alert('Project deleted successfully');
+      router.push('/dashboard');
+    } catch (error) {
+      console.error('Error deleting project:', error);
+      alert(error instanceof Error ? error.message : 'Failed to delete project');
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -436,6 +465,36 @@ const ProjectDetailsPage = ({ projectId }: ProjectDetailsProps) => {
             }}
             onCancel={() => setActiveTab('overview')}
           />
+        )}
+
+        {/* Delete Project Section - At the bottom for safety */}
+        {canManageTeam && activeTab === 'overview' && (
+          <div className="mt-12 pt-8 border-t border-gray-200">
+            <div className="bg-red-50 rounded-lg p-6 border border-red-200">
+              <div className="flex items-start space-x-4">
+                <div className="flex-shrink-0">
+                  <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.502 0L4.232 15.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-medium text-red-900 mb-2">Delete Project</h3>
+                  <p className="text-sm text-red-700 mb-4">
+                    Permanently delete this project and all associated data. This action cannot be undone.
+                  </p>
+                  <button
+                    onClick={handleDeleteProject}
+                    className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium flex items-center space-x-2"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    <span>Delete Project</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>

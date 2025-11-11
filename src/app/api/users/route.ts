@@ -51,33 +51,37 @@ export async function POST(request: NextRequest) {
     }
 
     const { username, email, password, firstName, lastName, role, teamId } = await request.json();
+    
+    console.log('Received data:', { username, email, password: '***', firstName, lastName, role, teamId });
 
     // Validate required fields
-    if (!username || !email || !password || !firstName || !lastName) {
+    if (!username || !password || !firstName || !lastName) {
       return NextResponse.json(
-        { success: false, error: 'All fields are required' },
+        { success: false, error: 'Username, password, first name, and last name are required' },
         { status: 400 }
       );
     }
 
     // Check if user already exists
-    const existingUser = await User.findOne({
-      $or: [
+    const existingUserQuery: any = { username: username.toLowerCase() };
+    if (email && email.trim()) {
+      existingUserQuery.$or = [
         { username: username.toLowerCase() },
         { email: email.toLowerCase() }
-      ]
-    });
+      ];
+    }
+
+    const existingUser = await User.findOne(existingUserQuery);
 
     if (existingUser) {
       return NextResponse.json(
-        { success: false, error: 'Username or email already exists' },
+        { success: false, error: 'Username already exists' + (email ? ' or email already exists' : '') },
         { status: 400 }
       );
     }
 
-    const userData = {
+    const userData: any = {
       username: username.toLowerCase(),
-      email: email.toLowerCase(),
       password,
       firstName,
       lastName,
@@ -85,6 +89,14 @@ export async function POST(request: NextRequest) {
       teamId: teamId || undefined,
       createdBy: currentUser.userId
     };
+
+    // Only add email if provided and not empty
+    if (email && email.trim() && email.trim().length > 0) {
+      userData.email = email.toLowerCase();
+    }
+    // Don't include email field at all if not provided to avoid null constraint issues
+
+    console.log('User data to save:', { ...userData, password: '***' });
 
     const user = await User.create(userData);
     const populatedUser = await User.findById(user._id)

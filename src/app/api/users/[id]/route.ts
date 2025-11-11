@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import User from '@/models/User';
+import Team from '@/models/Team';
 import AuthUtils from '@/lib/auth/utils';
 import mongoose from 'mongoose';
 
@@ -50,6 +51,28 @@ export async function PUT(
 
     const updateData = await request.json();
     
+    console.log('Raw update data received:', updateData);
+    
+    // Clean up data before processing
+    // Handle empty teamId - convert empty string to undefined/null
+    if (updateData.teamId === '' || updateData.teamId === null) {
+      updateData.teamId = undefined;
+    }
+    
+    // Handle empty email - convert empty string to undefined
+    if (updateData.email === '' || updateData.email === null) {
+      updateData.email = undefined;
+    }
+    
+    // Remove undefined values from updateData
+    Object.keys(updateData).forEach(key => {
+      if (updateData[key] === undefined) {
+        delete updateData[key];
+      }
+    });
+    
+    console.log('Cleaned update data:', updateData);
+    
     // Prevent non-admins from changing roles
     if (currentUser.role !== 'admin' && updateData.role) {
       delete updateData.role;
@@ -60,11 +83,41 @@ export async function PUT(
       delete updateData.isActive;
     }
 
+    // Get the current user to check for team changes
+    const currentUserDoc = await User.findById(id);
+    const oldTeamId = currentUserDoc?.teamId;
+    const newTeamId = updateData.teamId;
+
     const updatedUser = await User.findByIdAndUpdate(
       id,
       updateData,
       { new: true, runValidators: true }
     ).populate('teamId', 'name').select('-password');
+
+    // Synchronize team members if team assignment changed
+    if (oldTeamId?.toString() !== newTeamId?.toString()) {
+      console.log('Team assignment changed, synchronizing teams...');
+      
+      // Remove user from old team
+      if (oldTeamId) {
+        await Team.findByIdAndUpdate(
+          oldTeamId,
+          { $pull: { members: id } }
+        );
+        console.log('Removed user from old team:', oldTeamId);
+      }
+      
+      // Add user to new team
+      if (newTeamId) {
+        await Team.findByIdAndUpdate(
+          newTeamId,
+          { $addToSet: { members: id } }
+        );
+        console.log('Added user to new team:', newTeamId);
+      }
+    }
+
+    console.log('Updated user result:', updatedUser);
 
     return NextResponse.json({
       success: true,

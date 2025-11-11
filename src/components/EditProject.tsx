@@ -44,8 +44,17 @@ const EditProject = ({ project, onUpdate, onCancel }: EditProjectProps) => {
       newErrors.startDate = 'Start date is required';
     }
 
-    if (formData.endDate && new Date(formData.endDate) <= new Date(formData.startDate)) {
-      newErrors.endDate = 'End date must be after start date';
+    if (formData.endDate && formData.startDate) {
+      const startDate = new Date(formData.startDate);
+      const endDate = new Date(formData.endDate);
+      
+      // Compare dates by setting time to midnight for accurate comparison
+      const startDateOnly = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+      const endDateOnly = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+      
+      if (endDateOnly <= startDateOnly) {
+        newErrors.endDate = 'End date must be after start date';
+      }
     }
 
     if (formData.progress < 0 || formData.progress > 100) {
@@ -70,15 +79,40 @@ const EditProject = ({ project, onUpdate, onCancel }: EditProjectProps) => {
     setLoading(true);
 
     try {
+      // Prepare update data with proper date handling
+      const updateData: any = {
+        name: formData.name,
+        description: formData.description,
+        status: formData.status,
+        priority: formData.priority,
+        progress: formData.progress,
+        contractId: formData.contractId,
+        contractName: formData.contractName,
+        appropriation: formData.appropriation,
+        location: formData.location,
+        approvedBudgetContract: formData.approvedBudgetContract,
+        contractDuration: formData.contractDuration
+      };
+
+      // Only include dates if they are valid
+      if (formData.startDate) {
+        updateData.startDate = new Date(formData.startDate).toISOString();
+      }
+
+      if (formData.endDate && formData.endDate.trim() !== '') {
+        updateData.endDate = new Date(formData.endDate).toISOString();
+      } else {
+        updateData.endDate = null;
+      }
+
+      console.log('Sending update data:', updateData); // Debug log
+
       const response = await fetch(`/api/projects/${project._id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          ...formData,
-          endDate: formData.endDate || null,
-        }),
+        body: JSON.stringify(updateData),
       });
 
       if (!response.ok) {
@@ -117,17 +151,36 @@ const EditProject = ({ project, onUpdate, onCancel }: EditProjectProps) => {
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-semibold text-gray-900">Edit Project</h2>
-        <button
-          onClick={onCancel}
-          className="text-gray-400 hover:text-gray-600"
-        >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
-        </button>
+        <div className="flex items-center space-x-4">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            form="edit-project-form"
+            disabled={loading}
+            className="px-4 py-2 bg-amber-900 text-white rounded-lg hover:bg-amber-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? (
+              <>
+                <svg className="animate-spin -ml-1 mr-3 h-4 w-4 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Updating...
+              </>
+            ) : (
+              'Save Changes'
+            )}
+          </button>
+        </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form id="edit-project-form" onSubmit={handleSubmit} className="space-y-6">
         {/* Basic Information */}
         <div>
           <h3 className="text-lg font-medium text-gray-900 mb-4">Basic Information</h3>
@@ -151,22 +204,34 @@ const EditProject = ({ project, onUpdate, onCancel }: EditProjectProps) => {
             </div>
 
             <div>
-              <label htmlFor="progress" className="block text-sm font-medium text-gray-700 mb-2">
-                Progress (%)
-              </label>
-              <input
-                type="number"
-                id="progress"
-                name="progress"
-                value={formData.progress}
-                onChange={handleInputChange}
-                min="0"
-                max="100"
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 ${
-                  errors.progress ? 'border-red-300' : 'border-gray-300'
-                }`}
-              />
-              {errors.progress && <p className="mt-1 text-sm text-red-600">{errors.progress}</p>}
+                <label htmlFor="progress" className="block text-sm font-medium text-gray-700 mb-2">
+                  Progress (%)
+                </label>
+                <input
+                  type="range"
+                  id="progress"
+                  name="progress"
+                  value={formData.progress}
+                  onChange={e => {
+                    setFormData(prev => ({
+                      ...prev,
+                      progress: Number(e.target.value)
+                    }));
+                    if (errors.progress) {
+                      setErrors(prev => ({ ...prev, progress: '' }));
+                    }
+                  }}
+                  min="0"
+                  max="100"
+                  step="1"
+                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer focus:ring-amber-500 focus:border-amber-500"
+                />
+                <div className="flex justify-between text-xs text-gray-500 mt-1">
+                  <span>0%</span>
+                  <span>{formData.progress}%</span>
+                  <span>100%</span>
+                </div>
+                {errors.progress && <p className="mt-1 text-sm text-red-600">{errors.progress}</p>}
             </div>
           </div>
         </div>
@@ -384,34 +449,6 @@ const EditProject = ({ project, onUpdate, onCancel }: EditProjectProps) => {
               />
             </div>
           </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
-          <button
-            type="button"
-            onClick={onCancel}
-            className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={loading}
-            className="px-6 py-2 bg-amber-900 text-white rounded-lg hover:bg-amber-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? (
-              <>
-                <svg className="animate-spin -ml-1 mr-3 h-4 w-4 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Updating...
-              </>
-            ) : (
-              'Save Changes'
-            )}
-          </button>
         </div>
       </form>
     </div>

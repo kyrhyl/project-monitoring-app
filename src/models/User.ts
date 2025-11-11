@@ -4,7 +4,7 @@ import bcrypt from 'bcryptjs';
 export interface IUser {
   _id?: string;
   username: string;
-  email: string;
+  email?: string;
   password: string;
   role: 'admin' | 'team_leader' | 'member';
   firstName: string;
@@ -30,11 +30,29 @@ const UserSchema = new mongoose.Schema<IUser>({
   },
   email: {
     type: String,
-    required: [true, 'Email is required'],
+    required: false,
     unique: true,
+    sparse: true, // This allows multiple documents with null/undefined email
     trim: true,
     lowercase: true,
-    match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, 'Please provide a valid email']
+    default: undefined,
+    validate: {
+      validator: function(email: string) {
+        // Only validate if email is provided and not empty
+        if (!email || email.trim().length === 0) {
+          return true;
+        }
+        return /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/.test(email);
+      },
+      message: 'Please provide a valid email'
+    },
+    set: function(email: string) {
+      // Convert empty strings to undefined
+      if (!email || email.trim().length === 0) {
+        return undefined;
+      }
+      return email.toLowerCase();
+    }
   },
   password: {
     type: String,
@@ -61,7 +79,8 @@ const UserSchema = new mongoose.Schema<IUser>({
     maxLength: [50, 'Last name cannot exceed 50 characters']
   },
   teamId: {
-    type: mongoose.Schema.Types.ObjectId
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Team'
   },
   isActive: {
     type: Boolean,
@@ -104,4 +123,9 @@ UserSchema.index({ email: 1, isActive: 1 });
 UserSchema.index({ username: 1, isActive: 1 });
 UserSchema.index({ teamId: 1, role: 1 });
 
-export default mongoose.models.User || mongoose.model<IUser>('User', UserSchema);
+// Force delete any existing model to ensure fresh schema
+if (mongoose.models.User) {
+  delete mongoose.models.User;
+}
+
+export default mongoose.model<IUser>('User', UserSchema);

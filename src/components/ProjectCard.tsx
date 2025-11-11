@@ -6,10 +6,9 @@ import { ActionButton } from './ui/ModernCards';
 interface ProjectCardProps {
   project: IProject;
   onEdit?: (project: IProject) => void;
-  onDelete?: (id: string) => void;
 }
 
-const ProjectCard = ({ project, onEdit, onDelete }: ProjectCardProps) => {
+const ProjectCard = ({ project, onEdit }: ProjectCardProps) => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'planning': return 'bg-gray-100 text-gray-800 border-gray-200';
@@ -123,19 +122,6 @@ const ProjectCard = ({ project, onEdit, onDelete }: ProjectCardProps) => {
                 </svg>
               }
               label="Edit"
-            />
-          )}
-          {onDelete && (
-            <ActionButton
-              onClick={() => onDelete(project._id!)}
-              variant="danger"
-              size="sm"
-              icon={
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
-              }
-              label="Delete"
             />
           )}
         </div>

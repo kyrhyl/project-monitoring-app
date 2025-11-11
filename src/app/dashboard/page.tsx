@@ -262,6 +262,18 @@ export default function Dashboard() {
             <p className="text-stone-600 mt-1">Welcome back! Here's what's happening with your projects today.</p>
           </div>
           <div className="flex space-x-3">
+            {user?.role === 'team_leader' && (
+              <ActionButton
+                onClick={() => router.push('/team-leader')}
+                variant="secondary"
+                icon={
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.196-2.12M17 20V16a4 4 0 00-8 0v4M9 12V8a4 4 0 118 0v4" />
+                  </svg>
+                }
+                label="Team Dashboard"
+              />
+            )}
             {user?.role === 'admin' && (
               <ActionButton
                 onClick={() => router.push('/admin')}
@@ -357,7 +369,6 @@ export default function Dashboard() {
                       <ProjectCard
                         project={project}
                         onEdit={handleEdit}
-                        onDelete={handleDelete}
                       />
                     </div>
                   ))}
@@ -412,7 +423,6 @@ export default function Dashboard() {
                     <ProjectCard
                       project={project}
                       onEdit={handleEdit}
-                      onDelete={handleDelete}
                     />
                   </div>
                 ))}
