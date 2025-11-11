@@ -23,7 +23,8 @@ const EditProject = ({ project, onUpdate, onCancel }: EditProjectProps) => {
     appropriation: project.appropriation || '',
     location: project.location || '',
     approvedBudgetContract: project.approvedBudgetContract || '',
-    contractDuration: project.contractDuration || ''
+    contractDuration: project.contractDuration || '',
+    fundingSource: project.fundingSource || ''
   });
 
   const [loading, setLoading] = useState(false);
@@ -91,7 +92,8 @@ const EditProject = ({ project, onUpdate, onCancel }: EditProjectProps) => {
         appropriation: formData.appropriation,
         location: formData.location,
         approvedBudgetContract: formData.approvedBudgetContract,
-        contractDuration: formData.contractDuration
+        contractDuration: formData.contractDuration,
+        fundingSource: formData.fundingSource
       };
 
       // Only include dates if they are valid
@@ -376,7 +378,24 @@ const EditProject = ({ project, onUpdate, onCancel }: EditProjectProps) => {
             </div>
           </div>
 
-          {/* Second row: Contract Name */}
+          {/* Second row: Funding Source */}
+          <div className="mb-6">
+            <label htmlFor="fundingSource" className="block text-sm font-medium text-gray-700 mb-2">
+              Funding Source
+            </label>
+            <input
+              type="text"
+              id="fundingSource"
+              name="fundingSource"
+              value={formData.fundingSource}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+              maxLength={150}
+              placeholder="e.g., National Government Budget, Foreign Aid, Private Partnership"
+            />
+          </div>
+
+          {/* Third row: Contract Name */}
           <div className="mb-6">
             <label htmlFor="contractName" className="block text-sm font-medium text-gray-700 mb-2">
               Contract Name
@@ -393,7 +412,7 @@ const EditProject = ({ project, onUpdate, onCancel }: EditProjectProps) => {
             />
           </div>
 
-          {/* Third row: ABC, Location, Contract Duration */}
+          {/* Fourth row: ABC, Location, Contract Duration */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
               <label htmlFor="approvedBudgetContract" className="block text-sm font-medium text-gray-700 mb-2">

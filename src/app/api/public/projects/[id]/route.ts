@@ -19,9 +19,11 @@ interface PublicProjectDetail {
   location?: string;
   approvedBudgetContract?: number;
   contractDuration?: string;
+  fundingSource?: string;
   createdAt: Date;
   updatedAt: Date;
-  publicPhotos?: any[]; // Will be filtered for public consumption
+  publicPhotos?: any[];
+  geotaggedPhotos?: any[];
 }
 
 // GET - Fetch specific project details for public view
@@ -43,7 +45,7 @@ export async function GET(
     
     // Fetch project with only public-safe fields
     const project = await Project.findById(id)
-      .select('name description status priority startDate endDate progress contractId contractName appropriation location approvedBudgetContract contractDuration geotaggedPhotos createdAt updatedAt')
+      .select('name description status priority startDate endDate progress contractId contractName appropriation location approvedBudgetContract contractDuration fundingSource geotaggedPhotos createdAt updatedAt')
       .lean();
     
     if (!project) {
@@ -72,9 +74,38 @@ export async function GET(
       location: projectData.location ? projectData.location.split(',')[0] : undefined, // General location only
       approvedBudgetContract: projectData.approvedBudgetContract,
       contractDuration: projectData.contractDuration,
+      fundingSource: projectData.fundingSource,
       createdAt: projectData.createdAt,
       updatedAt: projectData.updatedAt,
-      // Filter photos for public consumption (remove any with sensitive metadata)
+      // Provide complete geotagged photos with GPS verification for transparency
+      geotaggedPhotos: projectData.geotaggedPhotos?.filter((photo: any) => 
+        !photo.description?.toLowerCase().includes('internal') &&
+        !photo.description?.toLowerCase().includes('private')
+      ).map((photo: any) => ({
+        _id: photo._id,
+        filename: photo.filename,
+        originalName: photo.originalName,
+        cloudinaryId: photo.cloudinaryId,
+        url: photo.url,
+        thumbnailUrl: photo.thumbnailUrl,
+        mimetype: photo.mimetype,
+        size: photo.size,
+        uploadedBy: photo.uploadedBy,
+        uploadedAt: photo.uploadedAt,
+        description: photo.description,
+        // Include GPS data for transparency and verification
+        geoData: photo.geoData ? {
+          latitude: photo.geoData.latitude,
+          longitude: photo.geoData.longitude,
+          altitude: photo.geoData.altitude,
+          accuracy: photo.geoData.accuracy,
+          address: photo.geoData.address,
+          city: photo.geoData.city,
+          country: photo.geoData.country
+        } : undefined,
+        exifData: photo.exifData
+      })) || [],
+      // Legacy photos for backward compatibility
       publicPhotos: projectData.geotaggedPhotos?.filter((photo: any) => 
         !photo.description?.toLowerCase().includes('internal') &&
         !photo.description?.toLowerCase().includes('private')
@@ -85,7 +116,6 @@ export async function GET(
         thumbnailUrl: photo.thumbnailUrl,
         description: photo.description,
         uploadedAt: photo.uploadedAt,
-        // Include general location but not exact coordinates
         generalLocation: photo.geoData?.city || photo.geoData?.address?.split(',')[0]
       })) || []
     };

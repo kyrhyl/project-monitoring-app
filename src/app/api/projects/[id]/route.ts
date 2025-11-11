@@ -172,6 +172,7 @@ export async function PUT(
           location: updateData.location?.trim() || null,
           approvedBudgetContract: updateData.approvedBudgetContract || null,
           contractDuration: updateData.contractDuration?.trim() || null,
+          fundingSource: updateData.fundingSource?.trim() || null,
           updatedAt: new Date()
         }
       },

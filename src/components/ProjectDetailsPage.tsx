@@ -382,6 +382,10 @@ const ProjectDetailsPage = ({ projectId }: ProjectDetailsProps) => {
                   <p className="text-gray-900 font-medium">{project.contractDuration || 'Not specified'}</p>
                 </div>
                 <div>
+                  <label className="text-sm font-medium text-gray-500">Funding Source</label>
+                  <p className="text-gray-900 font-medium">{project.fundingSource || 'Not specified'}</p>
+                </div>
+                <div>
                   <label className="text-sm font-medium text-gray-500">Project Location</label>
                   <p className="text-gray-900 font-medium">{project.location || 'Not specified'}</p>
                 </div>
