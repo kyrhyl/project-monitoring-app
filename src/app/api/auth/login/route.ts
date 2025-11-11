@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
       lastName: user.lastName,
       role: user.role,
       teamId: user.teamId?._id,
-      teamName: user.teamId?.name,
+      teamName: (user.teamId as any)?.name,
       lastLogin: user.lastLogin
     };
 

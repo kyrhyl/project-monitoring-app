@@ -61,7 +61,7 @@ export async function GET(
     const timeline = [];
     const teamAnalytics = {
       totalTeams: 0,
-      currentTeam: null,
+      currentTeam: null as null | { id: any; name: any; role: string },
       currentRole: user.role,
       leadershipPositions: 0,
       memberPositions: 0,

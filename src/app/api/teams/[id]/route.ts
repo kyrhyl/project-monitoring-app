@@ -45,10 +45,10 @@ export async function GET(
     // Enhance with slot manager information
     const enhancedTeam = {
       ...team,
-      currentLeader: TeamSlotManager.getCurrentLeader(team),
-      currentMembers: TeamSlotManager.getCurrentMembers(team),
-      leaderHistory: TeamSlotManager.getLeaderHistory(team),
-      memberCount: TeamSlotManager.getCurrentMembers(team).length
+      currentLeader: TeamSlotManager.getCurrentLeader(team as any),
+      currentMembers: TeamSlotManager.getCurrentMembers(team as any),
+      leaderHistory: TeamSlotManager.getLeaderHistory(team as any),
+      memberCount: TeamSlotManager.getCurrentMembers(team as any).length
     };
     
     return NextResponse.json({ 

@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
         lastName: userData.lastName,
         role: userData.role,
         teamId: userData.teamId?._id,
-        teamName: userData.teamId?.name,
+        teamName: (userData.teamId as any)?.name,
         lastLogin: userData.lastLogin
       }
     });

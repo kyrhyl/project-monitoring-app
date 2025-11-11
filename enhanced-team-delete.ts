@@ -94,7 +94,7 @@ export async function DELETE(
         { 
           isActive: false,
           deletedAt: new Date(),
-          deletedBy: currentUser._id,
+          deletedBy: currentUser.userId,
           updatedAt: new Date()
         },
         { new: true }
@@ -104,7 +104,7 @@ export async function DELETE(
       // await AuditLog.create({
       //   action: 'team_deleted',
       //   resourceId: id,
-      //   userId: currentUser._id,
+      //   userId: currentUser.userId,
       //   metadata: {
       //     teamName: team.name,
       //     affectedUsers: userUpdateResult.modifiedCount,
