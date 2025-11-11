@@ -180,31 +180,6 @@ export default function LoginPage() {
             </button>
           </div>
         </div>
-
-        <div className="mt-8">
-          <div className="bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 rounded-xl p-6">
-            <div className="flex items-center mb-3">
-              <svg className="w-5 h-5 text-amber-800 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-              </svg>
-              <h3 className="text-sm font-bold text-amber-900">Demo Credentials</h3>
-            </div>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between items-center">
-                <span className="text-amber-800 font-medium">Admin:</span>
-                <code className="bg-amber-100 px-2 py-1 rounded text-amber-900">admin / admin123</code>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-amber-800 font-medium">Team Leader:</span>
-                <code className="bg-amber-100 px-2 py-1 rounded text-amber-900">teamleader / leader123</code>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-amber-800 font-medium">Member:</span>
-                <code className="bg-amber-100 px-2 py-1 rounded text-amber-900">member1 / member123</code>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );
