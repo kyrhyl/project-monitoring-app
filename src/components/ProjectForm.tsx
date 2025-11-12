@@ -13,7 +13,7 @@ const ProjectForm = ({ project, onSubmit, onCancel }: ProjectFormProps) => {
   const [formData, setFormData] = useState({
     name: project?.name || '',
     description: project?.description || '',
-    status: project?.status || 'planning',
+    status: project?.status || 'not-yet-started',
     priority: project?.priority || 'medium',
     startDate: project?.startDate ? new Date(project.startDate).toISOString().split('T')[0] : '',
     endDate: project?.endDate ? new Date(project.endDate).toISOString().split('T')[0] : '',
@@ -73,10 +73,10 @@ const ProjectForm = ({ project, onSubmit, onCancel }: ProjectFormProps) => {
                 onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="planning">Planning</option>
-                <option value="active">Active</option>
-                <option value="completed">Completed</option>
-                <option value="on-hold">On Hold</option>
+                <option value="not-yet-started">Not Yet Started</option>
+                <option value="on-going">On Going</option>
+                <option value="submitted">Submitted</option>
+                <option value="approved">Approved</option>
               </select>
             </div>
             

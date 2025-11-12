@@ -10,20 +10,20 @@ interface DashboardStatsProps {
 const DashboardStats = ({ projects }: DashboardStatsProps) => {
   const [stats, setStats] = useState({
     total: 0,
-    active: 0,
-    completed: 0,
+    onGoing: 0,
+    approved: 0,
     averageProgress: 0
   });
 
   useEffect(() => {
     const total = projects.length;
-    const active = projects.filter(p => p.status === 'active').length;
-    const completed = projects.filter(p => p.status === 'completed').length;
+    const onGoing = projects.filter(p => p.status === 'on-going').length;
+    const approved = projects.filter(p => p.status === 'approved').length;
     const averageProgress = total > 0 
       ? Math.round(projects.reduce((sum, p) => sum + p.progress, 0) / total)
       : 0;
 
-    setStats({ total, active, completed, averageProgress });
+    setStats({ total, onGoing, approved, averageProgress });
   }, [projects]);
 
   const StatCard = ({ title, value, icon, color }: { title: string; value: number | string; icon: string; color: string }) => (
@@ -49,14 +49,14 @@ const DashboardStats = ({ projects }: DashboardStatsProps) => {
         color="bg-blue-100"
       />
       <StatCard
-        title="Active Projects"
-        value={stats.active}
+        title="On Going"
+        value={stats.onGoing}
         icon="⚡"
         color="bg-green-100"
       />
       <StatCard
-        title="Completed"
-        value={stats.completed}
+        title="Approved"
+        value={stats.approved}
         icon="✅"
         color="bg-purple-100"
       />

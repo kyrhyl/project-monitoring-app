@@ -273,10 +273,10 @@ const EditProject = ({ project, onUpdate, onCancel }: EditProjectProps) => {
                 onChange={handleInputChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
               >
-                <option value="planning">Planning</option>
-                <option value="active">Active</option>
-                <option value="completed">Completed</option>
-                <option value="on-hold">On Hold</option>
+                <option value="not-yet-started">Not Yet Started</option>
+                <option value="on-going">On Going</option>
+                <option value="submitted">Submitted</option>
+                <option value="approved">Approved</option>
               </select>
             </div>
 

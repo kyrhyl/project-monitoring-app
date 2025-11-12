@@ -11,11 +11,21 @@ interface ProjectCardProps {
 const ProjectCard = ({ project, onEdit }: ProjectCardProps) => {
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'planning': return 'bg-gray-100 text-gray-800 border-gray-200';
-      case 'in_progress': return 'bg-amber-100 text-amber-900 border-amber-200';
-      case 'completed': return 'bg-emerald-100 text-emerald-800 border-emerald-200';
-      case 'on_hold': return 'bg-red-100 text-red-800 border-red-200';
+      case 'not-yet-started': return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'on-going': return 'bg-amber-100 text-amber-900 border-amber-200';
+      case 'submitted': return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'approved': return 'bg-emerald-100 text-emerald-800 border-emerald-200';
       default: return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'not-yet-started': return 'Not Yet Started';
+      case 'on-going': return 'On Going';
+      case 'submitted': return 'Submitted';
+      case 'approved': return 'Approved';
+      default: return status.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase());
     }
   };
 
@@ -60,7 +70,7 @@ const ProjectCard = ({ project, onEdit }: ProjectCardProps) => {
         {/* Status and Priority */}
         <div className="flex gap-2 mb-4">
           <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${getStatusColor(project.status)}`}>
-            {project.status.replace('_', ' ').toUpperCase()}
+            {getStatusLabel(project.status)}
           </span>
           <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${getPriorityColor(project.priority)}`}>
             {project.priority.toUpperCase()} PRIORITY

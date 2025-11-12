@@ -31,6 +31,8 @@ export async function GET(request: NextRequest) {
     const priority = searchParams.get('priority');
     const location = searchParams.get('location');
     const search = searchParams.get('search');
+    const sortBy = searchParams.get('sortBy') || 'name';
+    const sortOrder = searchParams.get('sortOrder') || 'asc';
     const limit = parseInt(searchParams.get('limit') || '20');
     const page = parseInt(searchParams.get('page') || '1');
     
@@ -60,10 +62,15 @@ export async function GET(request: NextRequest) {
     // Calculate pagination
     const skip = (page - 1) * limit;
     
+    // Build sort object
+    const sortDirection = sortOrder === 'desc' ? -1 : 1;
+    let sortObject: any = {};
+    sortObject[sortBy] = sortDirection;
+    
     // Fetch projects with sanitized fields only
     const projects = await Project.find(query)
       .select('name description status priority startDate endDate progress contractId appropriation location approvedBudgetContract contractDuration createdAt updatedAt')
-      .sort({ createdAt: -1 })
+      .sort(sortObject)
       .skip(skip)
       .limit(limit)
       .lean();

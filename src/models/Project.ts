@@ -47,7 +47,7 @@ export interface IProject {
   _id?: string;
   name: string;
   description: string;
-  status: 'planning' | 'active' | 'completed' | 'on-hold';
+  status: 'not-yet-started' | 'on-going' | 'submitted' | 'approved';
   priority: 'low' | 'medium' | 'high';
   startDate: Date;
   endDate?: Date;
@@ -123,8 +123,8 @@ const ProjectSchema = new mongoose.Schema<IProject>({
   },
   status: {
     type: String,
-    enum: ['planning', 'active', 'completed', 'on-hold'],
-    default: 'planning',
+    enum: ['not-yet-started', 'on-going', 'submitted', 'approved'],
+    default: 'not-yet-started',
     required: true
   },
   priority: {

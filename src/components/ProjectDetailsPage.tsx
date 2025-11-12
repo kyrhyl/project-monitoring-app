@@ -89,11 +89,21 @@ const ProjectDetailsPage = ({ projectId }: ProjectDetailsProps) => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'planning': return 'bg-gray-100 text-gray-800 border-gray-200';
-      case 'active': return 'bg-green-100 text-green-800 border-green-200';
-      case 'completed': return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'on-hold': return 'bg-red-100 text-red-800 border-red-200';
+      case 'not-yet-started': return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'on-going': return 'bg-amber-100 text-amber-800 border-amber-200';
+      case 'submitted': return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'approved': return 'bg-emerald-100 text-emerald-800 border-emerald-200';
       default: return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'not-yet-started': return 'Not Yet Started';
+      case 'on-going': return 'On Going';
+      case 'submitted': return 'Submitted';
+      case 'approved': return 'Approved';
+      default: return status.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase());
     }
   };
 
@@ -185,7 +195,7 @@ const ProjectDetailsPage = ({ projectId }: ProjectDetailsProps) => {
               
               <div className="flex items-center space-x-4">
                 <span className={`px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(project.status)}`}>
-                  {project.status}
+                  {getStatusLabel(project.status)}
                 </span>
                 <span className={`px-3 py-1 rounded-full text-sm font-medium border ${getPriorityColor(project.priority)}`}>
                   {project.priority} priority
@@ -321,7 +331,7 @@ const ProjectDetailsPage = ({ projectId }: ProjectDetailsProps) => {
                 <div className="space-y-3">
                   <div>
                     <label className="text-sm font-medium text-gray-500">Current Status</label>
-                    <p className="text-gray-900 capitalize">{project.status}</p>
+                    <p className="text-gray-900 capitalize">{getStatusLabel(project.status)}</p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-500">Priority</label>

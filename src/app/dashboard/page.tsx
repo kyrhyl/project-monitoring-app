@@ -42,6 +42,8 @@ export default function Dashboard() {
   const [showForm, setShowForm] = useState(false);
   const [editingProject, setEditingProject] = useState<IProject | null>(null);
   const [user, setUser] = useState<User | null>(null);
+  const [sortBy, setSortBy] = useState<'name' | 'status' | 'priority' | 'progress' | 'startDate' | 'endDate'>('name');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const router = useRouter();
 
   useEffect(() => {
@@ -98,7 +100,56 @@ export default function Dashboard() {
         setMyTasks(data.data || []);
       }
     } catch (error) {
-      console.error('Error fetching my tasks:', error);
+      console.error('Error fetching tasks:', error);
+    }
+  };
+
+  // Sorting function
+  const sortedProjects = [...projects].sort((a, b) => {
+    let aValue: any, bValue: any;
+
+    switch (sortBy) {
+      case 'name':
+        aValue = a.name.toLowerCase();
+        bValue = b.name.toLowerCase();
+        break;
+      case 'status':
+        const statusOrder = { 'not-yet-started': 1, 'on-going': 2, 'submitted': 3, 'approved': 4 };
+        aValue = statusOrder[a.status as keyof typeof statusOrder] || 0;
+        bValue = statusOrder[b.status as keyof typeof statusOrder] || 0;
+        break;
+      case 'priority':
+        const priorityOrder = { low: 1, medium: 2, high: 3 };
+        aValue = priorityOrder[a.priority as keyof typeof priorityOrder];
+        bValue = priorityOrder[b.priority as keyof typeof priorityOrder];
+        break;
+      case 'progress':
+        aValue = a.progress || 0;
+        bValue = b.progress || 0;
+        break;
+      case 'startDate':
+        aValue = new Date(a.startDate || 0);
+        bValue = new Date(b.startDate || 0);
+        break;
+      case 'endDate':
+        aValue = new Date(a.endDate || 0);
+        bValue = new Date(b.endDate || 0);
+        break;
+      default:
+        return 0;
+    }
+
+    if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
+    if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
+    return 0;
+  });
+
+  const handleSortChange = (newSortBy: typeof sortBy) => {
+    if (sortBy === newSortBy) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(newSortBy);
+      setSortOrder('asc');
     }
   };
 
@@ -220,10 +271,10 @@ export default function Dashboard() {
     }, {} as Record<string, number>);
     
     return {
-      planning: stats.planning || 0,
-      in_progress: stats.in_progress || 0,
-      completed: stats.completed || 0,
-      on_hold: stats.on_hold || 0
+      'not-yet-started': stats['not-yet-started'] || 0,
+      'on-going': stats['on-going'] || 0,
+      'submitted': stats['submitted'] || 0,
+      'approved': stats['approved'] || 0
     };
   };
 
@@ -305,7 +356,7 @@ export default function Dashboard() {
         {activeTab === 'overview' ? (
           <>
             {/* Stats Overview */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-4 mb-8">
               <StatsCard
                 title="Total Projects"
                 value={projects.length}
@@ -317,8 +368,8 @@ export default function Dashboard() {
                 }
               />
               <StatsCard
-                title="In Progress"
-                value={statusStats.in_progress}
+                title="Not Yet Started"
+                value={statusStats['not-yet-started']}
                 color="gray"
                 icon={
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -327,19 +378,29 @@ export default function Dashboard() {
                 }
               />
               <StatsCard
-                title="Completed"
-                value={statusStats.completed}
-                color="emerald"
+                title="On Going"
+                value={statusStats['on-going']}
+                color="chocolate"
                 icon={
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
                 }
               />
               <StatsCard
-                title="Planning"
-                value={statusStats.planning}
-                color="black"
+                title="Submitted"
+                value={statusStats.submitted}
+                color="gray"
+                icon={
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                  </svg>
+                }
+              />
+              <StatsCard
+                title="Approved"
+                value={statusStats.approved}
+                color="emerald"
                 icon={
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
@@ -348,10 +409,10 @@ export default function Dashboard() {
               />
             </div>
 
-            {/* Recent Projects */}
+            {/* On Going Projects */}
             <ModernCard>
               <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-black">Recent Projects</h2>
+                <h2 className="text-2xl font-bold text-black">On Going Projects</h2>
                 <button 
                   onClick={() => setActiveTab('projects')}
                   className="text-red-600 hover:text-red-800 font-medium text-sm flex items-center"
@@ -362,9 +423,9 @@ export default function Dashboard() {
                   </svg>
                 </button>
               </div>
-              {projects.slice(0, 3).length > 0 ? (
+              {projects.filter(project => project.status === 'on-going').length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {projects.slice(0, 3).map((project) => (
+                  {projects.filter(project => project.status === 'on-going').map((project) => (
                     <div key={project._id} onClick={() => router.push(`/projects/${project._id}`)} className="cursor-pointer">
                       <ProjectCard
                         project={project}
@@ -377,11 +438,11 @@ export default function Dashboard() {
                 <div className="text-center py-12">
                   <div className="w-16 h-16 bg-gradient-to-r from-red-100 to-amber-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
                     <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 9a2 2 0 00-2 2v2m0 0V9a2 2 0 012-2h14a2 2 0 012 2v2M7 7V5a2 2 0 012-2h6a2 2 0 012 2v2" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                     </svg>
                   </div>
-                  <h3 className="text-lg font-semibold text-black mb-2">No projects yet</h3>
-                  <p className="text-stone-600 mb-6">Create your first project to get started with monitoring!</p>
+                  <h3 className="text-lg font-semibold text-black mb-2">No on-going projects</h3>
+                  <p className="text-stone-600 mb-6">No projects are currently in progress. Start a project to see it here!</p>
                   <ActionButton
                     onClick={() => {
                       setEditingProject(null);
@@ -392,7 +453,7 @@ export default function Dashboard() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                       </svg>
                     }
-                    label="Create Your First Project"
+                    label="Create New Project"
                   />
                 </div>
               )}
@@ -416,9 +477,44 @@ export default function Dashboard() {
                 label="Add Project"
               />
             </div>
+
+            {/* Sorting Controls */}
+            <div className="flex flex-wrap gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-gray-700">Sort by:</span>
+                <div className="flex gap-2 flex-wrap">
+                  {[
+                    { key: 'name', label: 'Name' },
+                    { key: 'status', label: 'Status' },
+                    { key: 'priority', label: 'Priority' },
+                    { key: 'progress', label: 'Progress' },
+                    { key: 'startDate', label: 'Start Date' },
+                    { key: 'endDate', label: 'End Date' }
+                  ].map((option) => (
+                    <button
+                      key={option.key}
+                      onClick={() => handleSortChange(option.key as typeof sortBy)}
+                      className={`px-3 py-1 text-xs rounded-full transition-colors ${
+                        sortBy === option.key
+                          ? 'bg-amber-600 text-white'
+                          : 'bg-white text-gray-600 hover:bg-gray-100'
+                      }`}
+                    >
+                      {option.label}
+                      {sortBy === option.key && (
+                        <span className="ml-1">
+                          {sortOrder === 'asc' ? '↑' : '↓'}
+                        </span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
             {projects.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {projects.map((project) => (
+                {sortedProjects.map((project) => (
                   <div key={project._id} onClick={() => router.push(`/projects/${project._id}`)} className="cursor-pointer">
                     <ProjectCard
                       project={project}
@@ -535,7 +631,23 @@ export default function Dashboard() {
 
         {/* Calendar Tab */}
         {activeTab === 'calendar' && (
-          <Calendar />
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
+            <div className="w-16 h-16 bg-gradient-to-r from-amber-100 to-yellow-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">Enhanced Calendar View</h3>
+            <p className="text-gray-600 mb-6">
+              Access the full-featured calendar with project schedules, task assignments, and detailed views.
+            </p>
+            <button
+              onClick={() => router.push('/calendar')}
+              className="px-6 py-3 bg-amber-600 text-white rounded-lg hover:bg-amber-700 font-medium"
+            >
+              Open Calendar →
+            </button>
+          </div>
         )}
 
         {/* Project Form Modal */}
