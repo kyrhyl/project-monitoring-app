@@ -376,7 +376,7 @@ export default function CalendarPage() {
               return (
                 <div
                   key={index}
-                  className={`min-h-[100px] p-2 border-r border-b border-gray-200 ${
+                  className={`min-h-[180px] p-2 border-r border-b border-gray-200 ${
                     !isCurrentMonth ? 'bg-gray-50 text-gray-400' : 'bg-white'
                   } ${isToday ? 'bg-amber-50 border-amber-200' : ''}`}
                 >
@@ -384,33 +384,28 @@ export default function CalendarPage() {
                     {date.getDate()}
                   </div>
                   
-                  {/* Event List with Project Names Emphasized */}
+                  {/* Event List with All Tasks Displayed */}
                   <div className="space-y-1">
-                    {dayEvents.slice(0, 2).map((event) => (
+                    {dayEvents.map((event) => (
                       <div
                         key={event.id}
                         onClick={() => setSelectedEvent(event)}
-                        className={`text-xs px-2 py-1 rounded cursor-pointer hover:opacity-75 ${getStatusColor(event.status, event.type)} border border-opacity-30`}
+                        className={`text-xs px-1.5 py-0.5 rounded cursor-pointer hover:opacity-75 ${getStatusColor(event.status, event.type)} border border-opacity-30`}
                         title={`${event.title} - ${event.project || 'No project'} - ${event.assignee || 'No assignee'}`}
                       >
-                        <div className="font-bold text-[12px] leading-tight mb-0.5">
+                        <div className="font-bold text-[10px] leading-tight mb-0.5">
                           📋 {event.project || 'Unknown Project'}
                         </div>
-                        <div className="text-[10px] opacity-80 leading-tight font-medium">
+                        <div className="text-[9px] opacity-80 leading-tight font-medium">
                           {event.title}
                         </div>
                         {event.assignee && (
-                          <div className="text-[9px] opacity-70 leading-tight">
+                          <div className="text-[8px] opacity-70 leading-tight">
                             👤 {event.assignee}
                           </div>
                         )}
                       </div>
                     ))}
-                    {dayEvents.length > 2 && (
-                      <div className="text-[10px] text-gray-500 text-center mt-1 p-1 bg-gray-100 rounded">
-                        +{dayEvents.length - 2} more tasks
-                      </div>
-                    )}
                   </div>
                 </div>
               );
