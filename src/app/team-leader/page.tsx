@@ -60,13 +60,6 @@ export default function TeamLeaderDashboard() {
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
   const router = useRouter();
 
-  // Handle calendar tab redirect
-  useEffect(() => {
-    if (activeTab === 'calendar') {
-      router.push('/calendar');
-    }
-  }, [activeTab, router]);
-
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -215,7 +208,15 @@ export default function TeamLeaderDashboard() {
             ].map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={(e) => {
+                  if (tab.id === 'calendar') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    window.location.href = '/calendar';
+                    return false;
+                  }
+                  setActiveTab(tab.id);
+                }}
                 className={`py-2 px-1 border-b-2 font-medium text-sm ${
                   activeTab === tab.id
                     ? 'border-blue-500 text-blue-600'
@@ -397,79 +398,61 @@ export default function TeamLeaderDashboard() {
         )}
 
         {activeTab === 'tasks' && (
-          <div className="bg-white shadow rounded-lg">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-medium text-gray-900">My Personal Tasks</h3>
-              <p className="text-sm text-gray-500 mt-1">Tasks assigned to you personally (separate from team management)</p>
-            </div>
-            <div className="divide-y divide-gray-200">
-              {personalTasks.length === 0 ? (
-                <div className="p-6 text-center">
-                  <div className="text-gray-400 mb-2">
-                    <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
+          <div>
+            <div className="bg-white shadow rounded-lg">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <h3 className="text-lg font-medium text-gray-900">My Personal Tasks</h3>
+                <p className="text-sm text-gray-500 mt-1">Tasks assigned to you personally (separate from team management)</p>
+              </div>
+              <div className="divide-y divide-gray-200">
+                {personalTasks.length === 0 ? (
+                  <div className="p-6 text-center">
+                    <div className="text-gray-400 mb-2">
+                      <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                    </div>
+                    <p className="text-gray-500">No personal tasks assigned to you</p>
+                    <p className="text-xs text-gray-400 mt-1">This section shows tasks assigned TO you, not team tasks you manage</p>
                   </div>
-                  <p className="text-gray-500">No personal tasks assigned to you</p>
-                  <p className="text-xs text-gray-400 mt-1">This section shows tasks assigned TO you, not team tasks you manage</p>
-                </div>
-              ) : (
-                personalTasks.map((task) => (
-                  <div key={task._id} className="p-6">
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <h4 className="text-lg font-medium text-gray-900">{task.title}</h4>
-                        <p className="text-gray-600 mt-1">{task.description}</p>
-                        <div className="mt-2 flex items-center space-x-4">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            task.status === 'completed' ? 'bg-green-100 text-green-800' :
-                            task.status === 'in-progress' ? 'bg-blue-100 text-blue-800' :
-                            'bg-gray-100 text-gray-800'
-                          }`}>
-                            {task.status}
-                          </span>
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            task.priority === 'high' ? 'bg-red-100 text-red-800' :
-                            task.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                            'bg-gray-100 text-gray-800'
-                          }`}>
-                            {task.priority} priority
-                          </span>
-                          {task.projectId?.name && (
-                            <span className="text-sm text-gray-500">
-                              Project: {task.projectId.name}
+                ) : (
+                  personalTasks.map((task) => (
+                    <div key={task._id} className="p-6">
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <h4 className="text-lg font-medium text-gray-900">{task.title}</h4>
+                          <p className="text-gray-600 mt-1">{task.description}</p>
+                          <div className="mt-2 flex items-center space-x-4">
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              task.status === 'completed' ? 'bg-green-100 text-green-800' :
+                              task.status === 'in-progress' ? 'bg-blue-100 text-blue-800' :
+                              'bg-gray-100 text-gray-800'
+                            }`}>
+                              {task.status}
                             </span>
-                          )}
-                          {task.dueDate && (
-                            <span className="text-sm text-gray-500">
-                              Due: {formatDate(task.dueDate)}
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              task.priority === 'high' ? 'bg-red-100 text-red-800' :
+                              task.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                              'bg-gray-100 text-gray-800'
+                            }`}>
+                              {task.priority} priority
                             </span>
-                          )}
+                            {task.projectId?.name && (
+                              <span className="text-sm text-gray-500">
+                                Project: {task.projectId.name}
+                              </span>
+                            )}
+                            {task.dueDate && (
+                              <span className="text-sm text-gray-500">
+                                Due: {formatDate(task.dueDate)}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'calendar' && (
-          <div className="space-y-6">
-            <div className="bg-white p-6 rounded-lg shadow text-center">
-              <div className="flex flex-col items-center space-y-4">
-                <svg className="w-16 h-16 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 002 2z" />
-                </svg>
-                <h3 className="text-lg font-medium text-gray-900">Loading Calendar...</h3>
-                <p className="text-gray-600">You'll be redirected to the project calendar shortly.</p>
-                <button
-                  onClick={() => router.push('/calendar')}
-                  className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors"
-                >
-                  Go to Calendar Now
-                </button>
+                  ))
+                )}
               </div>
             </div>
           </div>

@@ -398,7 +398,7 @@ const Calendar = () => {
             return (
               <div
                 key={index}
-                className={`min-h-20 sm:min-h-24 min-w-24 sm:min-w-32 border border-gray-100 p-1 ${
+                className={`min-h-24 sm:min-h-32 min-w-24 sm:min-w-32 border border-gray-100 p-1 ${
                   day.isCurrentMonth 
                     ? 'bg-white' 
                     : 'bg-gray-50'
@@ -406,7 +406,7 @@ const Calendar = () => {
                   isToday 
                     ? 'ring-2 ring-amber-400 ring-opacity-50' 
                     : ''
-                }`}
+                } overflow-y-auto`}
               >
                 <div className={`text-sm font-medium mb-1 ${
                   day.isCurrentMonth 
@@ -419,7 +419,7 @@ const Calendar = () => {
                 </div>
                 
                 <div className="space-y-1">
-                  {items.slice(0, isMobile ? 1 : 3).map((item) => (
+                  {items.map((item) => (
                     <div
                       key={item.id}
                       className={`text-xs p-1 rounded border-l-2 ${getPriorityColor(item.priority)} cursor-pointer hover:shadow-sm transition-shadow`}
@@ -448,12 +448,6 @@ const Calendar = () => {
                       )}
                     </div>
                   ))}
-                  
-                  {items.length > (isMobile ? 1 : 3) && (
-                    <div className="text-xs text-gray-500 text-center py-1">
-                      +{items.length - (isMobile ? 1 : 3)} more
-                    </div>
-                  )}
                 </div>
               </div>
             );
