@@ -60,6 +60,13 @@ export default function TeamLeaderDashboard() {
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
   const router = useRouter();
 
+  // Handle calendar tab redirect
+  useEffect(() => {
+    if (activeTab === 'calendar') {
+      router.push('/calendar');
+    }
+  }, [activeTab, router]);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -203,6 +210,7 @@ export default function TeamLeaderDashboard() {
               { id: 'members', name: 'Team Members' },
               { id: 'projects', name: 'Projects' },
               { id: 'tasks', name: 'My Tasks' },
+              { id: 'calendar', name: 'Calendar' },
               { id: 'analytics', name: 'Analytics' }
             ].map((tab) => (
               <button
@@ -443,6 +451,26 @@ export default function TeamLeaderDashboard() {
                   </div>
                 ))
               )}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'calendar' && (
+          <div className="space-y-6">
+            <div className="bg-white p-6 rounded-lg shadow text-center">
+              <div className="flex flex-col items-center space-y-4">
+                <svg className="w-16 h-16 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 002 2z" />
+                </svg>
+                <h3 className="text-lg font-medium text-gray-900">Loading Calendar...</h3>
+                <p className="text-gray-600">You'll be redirected to the project calendar shortly.</p>
+                <button
+                  onClick={() => router.push('/calendar')}
+                  className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors"
+                >
+                  Go to Calendar Now
+                </button>
+              </div>
             </div>
           </div>
         )}
