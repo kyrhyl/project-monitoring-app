@@ -49,7 +49,7 @@ export interface IProject {
   description: string;
   status: 'not-yet-started' | 'on-going' | 'submitted' | 'approved';
   priority: 'low' | 'medium' | 'high';
-  startDate: Date;
+  startDate?: Date;
   endDate?: Date;
   progress: number; // 0-100
   contractId?: string;
@@ -134,8 +134,7 @@ const ProjectSchema = new mongoose.Schema<IProject>({
     required: true
   },
   startDate: {
-    type: Date,
-    required: [true, 'Start date is required']
+    type: Date
   },
   endDate: {
     type: Date

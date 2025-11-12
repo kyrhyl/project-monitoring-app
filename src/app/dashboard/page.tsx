@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { IProject } from '@/models/Project';
 import DashboardStats from '@/components/DashboardStats';
 import ProjectCard from '@/components/ProjectCard';
@@ -34,7 +34,7 @@ interface Task {
   estimatedHours?: number;
 }
 
-export default function Dashboard() {
+function DashboardContent() {
   const [activeTab, setActiveTab] = useState<'overview' | 'projects' | 'tasks' | 'calendar'>('overview');
   const [projects, setProjects] = useState<IProject[]>([]);
   const [myTasks, setMyTasks] = useState<Task[]>([]);
@@ -44,7 +44,27 @@ export default function Dashboard() {
   const [user, setUser] = useState<User | null>(null);
   const [sortBy, setSortBy] = useState<'name' | 'status' | 'priority' | 'progress' | 'startDate' | 'endDate'>('name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  
+  // Search and filter states
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [priorityFilter, setPriorityFilter] = useState<string>('all');
+  
+  // Task search and filter states
+  const [taskSearchTerm, setTaskSearchTerm] = useState('');
+  const [taskStatusFilter, setTaskStatusFilter] = useState<string>('all');
+  const [taskPriorityFilter, setTaskPriorityFilter] = useState<string>('all');
+  
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    // Set the active tab based on URL parameter when component mounts
+    const tabParam = searchParams.get('tab');
+    if (tabParam && ['overview', 'projects', 'tasks', 'calendar'].includes(tabParam)) {
+      setActiveTab(tabParam as 'overview' | 'projects' | 'tasks' | 'calendar');
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     checkAuth();
@@ -104,45 +124,95 @@ export default function Dashboard() {
     }
   };
 
-  // Sorting function
-  const sortedProjects = [...projects].sort((a, b) => {
-    let aValue: any, bValue: any;
+  // Filter, search, and sort function
+  const filteredAndSortedProjects = [...projects]
+    .filter((project) => {
+      // Search filter
+      const matchesSearch = searchTerm === '' || 
+        project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        project.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        project.contractId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        project.location?.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      // Status filter
+      const matchesStatus = statusFilter === 'all' || project.status === statusFilter;
+      
+      // Priority filter
+      const matchesPriority = priorityFilter === 'all' || project.priority === priorityFilter;
+      
+      return matchesSearch && matchesStatus && matchesPriority;
+    })
+    .sort((a, b) => {
+      let aValue: any, bValue: any;
 
-    switch (sortBy) {
-      case 'name':
-        aValue = a.name.toLowerCase();
-        bValue = b.name.toLowerCase();
-        break;
-      case 'status':
-        const statusOrder = { 'not-yet-started': 1, 'on-going': 2, 'submitted': 3, 'approved': 4 };
-        aValue = statusOrder[a.status as keyof typeof statusOrder] || 0;
-        bValue = statusOrder[b.status as keyof typeof statusOrder] || 0;
-        break;
-      case 'priority':
-        const priorityOrder = { low: 1, medium: 2, high: 3 };
-        aValue = priorityOrder[a.priority as keyof typeof priorityOrder];
-        bValue = priorityOrder[b.priority as keyof typeof priorityOrder];
-        break;
-      case 'progress':
-        aValue = a.progress || 0;
-        bValue = b.progress || 0;
-        break;
-      case 'startDate':
-        aValue = new Date(a.startDate || 0);
-        bValue = new Date(b.startDate || 0);
-        break;
-      case 'endDate':
-        aValue = new Date(a.endDate || 0);
-        bValue = new Date(b.endDate || 0);
-        break;
-      default:
-        return 0;
-    }
+      switch (sortBy) {
+        case 'name':
+          aValue = a.name.toLowerCase();
+          bValue = b.name.toLowerCase();
+          break;
+        case 'status':
+          const statusOrder = { 'not-yet-started': 1, 'on-going': 2, 'submitted': 3, 'approved': 4 };
+          aValue = statusOrder[a.status as keyof typeof statusOrder] || 0;
+          bValue = statusOrder[b.status as keyof typeof statusOrder] || 0;
+          break;
+        case 'priority':
+          const priorityOrder = { low: 1, medium: 2, high: 3 };
+          aValue = priorityOrder[a.priority as keyof typeof priorityOrder];
+          bValue = priorityOrder[b.priority as keyof typeof priorityOrder];
+          break;
+        case 'progress':
+          aValue = a.progress || 0;
+          bValue = b.progress || 0;
+          break;
+        case 'startDate':
+          aValue = new Date(a.startDate || 0);
+          bValue = new Date(b.startDate || 0);
+          break;
+        case 'endDate':
+          aValue = new Date(a.endDate || 0);
+          bValue = new Date(b.endDate || 0);
+          break;
+        default:
+          return 0;
+      }
 
-    if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
-    if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
-    return 0;
+      if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
+      if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+  // Filter and search tasks
+  const filteredTasks = myTasks.filter((task) => {
+    // Search filter
+    const matchesSearch = taskSearchTerm === '' || 
+      task.title.toLowerCase().includes(taskSearchTerm.toLowerCase()) ||
+      task.description?.toLowerCase().includes(taskSearchTerm.toLowerCase()) ||
+      task.projectId.name.toLowerCase().includes(taskSearchTerm.toLowerCase());
+    
+    // Status filter
+    const matchesStatus = taskStatusFilter === 'all' || task.status === taskStatusFilter;
+    
+    // Priority filter
+    const matchesPriority = taskPriorityFilter === 'all' || task.priority === taskPriorityFilter;
+    
+    return matchesSearch && matchesStatus && matchesPriority;
   });
+
+  // Clear all filters function
+  const clearAllFilters = () => {
+    setSearchTerm('');
+    setStatusFilter('all');
+    setPriorityFilter('all');
+    setSortBy('name');
+    setSortOrder('asc');
+  };
+
+  // Clear task filters function
+  const clearTaskFilters = () => {
+    setTaskSearchTerm('');
+    setTaskStatusFilter('all');
+    setTaskPriorityFilter('all');
+  };
 
   const handleSortChange = (newSortBy: typeof sortBy) => {
     if (sortBy === newSortBy) {
@@ -353,7 +423,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {activeTab === 'overview' ? (
+        {activeTab === 'overview' && (
           <>
             {/* Stats Overview */}
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-4 mb-8">
@@ -426,7 +496,7 @@ export default function Dashboard() {
               {projects.filter(project => project.status === 'on-going').length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {projects.filter(project => project.status === 'on-going').map((project) => (
-                    <div key={project._id} onClick={() => router.push(`/projects/${project._id}`)} className="cursor-pointer">
+                    <div key={project._id} onClick={() => router.push(`/projects/${project._id}?returnTab=overview`)} className="cursor-pointer">
                       <ProjectCard
                         project={project}
                         onEdit={handleEdit}
@@ -453,75 +523,167 @@ export default function Dashboard() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                       </svg>
                     }
-                    label="Create New Project"
+                    label="Create First Project"
                   />
                 </div>
               )}
             </ModernCard>
           </>
-        ) : (
-          /* Projects Tab */
+        )}
+
+        {activeTab === 'projects' && (
           <ModernCard>
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-black">All Projects</h2>
-              <ActionButton
-                onClick={() => {
-                  setEditingProject(null);
-                  setShowForm(true);
-                }}
-                icon={
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
-                }
-                label="Add Project"
-              />
-            </div>
-
-            {/* Sorting Controls */}
-            <div className="flex flex-wrap gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-gray-700">Sort by:</span>
-                <div className="flex gap-2 flex-wrap">
-                  {[
-                    { key: 'name', label: 'Name' },
-                    { key: 'status', label: 'Status' },
-                    { key: 'priority', label: 'Priority' },
-                    { key: 'progress', label: 'Progress' },
-                    { key: 'startDate', label: 'Start Date' },
-                    { key: 'endDate', label: 'End Date' }
-                  ].map((option) => (
-                    <button
-                      key={option.key}
-                      onClick={() => handleSortChange(option.key as typeof sortBy)}
-                      className={`px-3 py-1 text-xs rounded-full transition-colors ${
-                        sortBy === option.key
-                          ? 'bg-amber-600 text-white'
-                          : 'bg-white text-gray-600 hover:bg-gray-100'
-                      }`}
-                    >
-                      {option.label}
-                      {sortBy === option.key && (
-                        <span className="ml-1">
-                          {sortOrder === 'asc' ? '↑' : '↓'}
-                        </span>
-                      )}
-                    </button>
-                  ))}
-                </div>
+              <div className="text-sm text-gray-600">
+                {projects.length} total projects
               </div>
             </div>
 
-            {projects.length > 0 ? (
+            {/* Search, Filter, and Sort Controls */}
+            <div className="space-y-4 mb-6">
+              {/* Search Bar */}
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+                <input
+                  type="text"
+                  placeholder="Search projects by name, description, contract ID, or location..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="block w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-sm"
+                />
+                {searchTerm && (
+                  <button
+                    onClick={() => setSearchTerm('')}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  >
+                    <svg className="w-4 h-4 text-gray-400 hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                )}
+              </div>
+
+              {/* Filters and Sort Controls */}
+              <div className="flex flex-wrap gap-4 p-4 bg-gray-50 rounded-lg">
+                {/* Status Filter */}
+                <div className="flex items-center gap-2">
+                  <label className="text-sm font-medium text-gray-700">Status:</label>
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    className="px-3 py-1 text-sm border border-gray-200 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                  >
+                    <option value="all">All Status</option>
+                    <option value="not-yet-started">Not Yet Started</option>
+                    <option value="on-going">On-going</option>
+                    <option value="submitted">Submitted</option>
+                    <option value="approved">Approved</option>
+                  </select>
+                </div>
+
+                {/* Priority Filter */}
+                <div className="flex items-center gap-2">
+                  <label className="text-sm font-medium text-gray-700">Priority:</label>
+                  <select
+                    value={priorityFilter}
+                    onChange={(e) => setPriorityFilter(e.target.value)}
+                    className="px-3 py-1 text-sm border border-gray-200 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                  >
+                    <option value="all">All Priority</option>
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                  </select>
+                </div>
+
+                {/* Sort Controls */}
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-gray-700">Sort by:</span>
+                  <div className="flex gap-1 flex-wrap">
+                    {[
+                      { key: 'name', label: 'Name' },
+                      { key: 'status', label: 'Status' },
+                      { key: 'priority', label: 'Priority' },
+                      { key: 'progress', label: 'Progress' },
+                      { key: 'startDate', label: 'Start Date' },
+                      { key: 'endDate', label: 'End Date' }
+                    ].map((option) => (
+                      <button
+                        key={option.key}
+                        onClick={() => handleSortChange(option.key as typeof sortBy)}
+                        className={`px-2 py-1 text-xs rounded-md transition-colors ${
+                          sortBy === option.key
+                            ? 'bg-amber-600 text-white'
+                            : 'bg-white text-gray-600 hover:bg-gray-100'
+                        }`}
+                      >
+                        {option.label}
+                        {sortBy === option.key && (
+                          <span className="ml-1">
+                            {sortOrder === 'asc' ? '↑' : '↓'}
+                          </span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Clear Filters */}
+                {(searchTerm || statusFilter !== 'all' || priorityFilter !== 'all' || sortBy !== 'name' || sortOrder !== 'asc') && (
+                  <button
+                    onClick={clearAllFilters}
+                    className="px-3 py-1 text-sm bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors"
+                  >
+                    Clear All
+                  </button>
+                )}
+              </div>
+
+              {/* Results Summary */}
+              <div className="flex justify-between items-center text-sm text-gray-600">
+                <span>
+                  Showing {filteredAndSortedProjects.length} of {projects.length} projects
+                  {searchTerm && <span> matching "{searchTerm}"</span>}
+                </span>
+                {filteredAndSortedProjects.length !== projects.length && (
+                  <span className="text-amber-600 font-medium">
+                    {projects.length - filteredAndSortedProjects.length} projects filtered out
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {filteredAndSortedProjects.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {sortedProjects.map((project) => (
-                  <div key={project._id} onClick={() => router.push(`/projects/${project._id}`)} className="cursor-pointer">
+                {filteredAndSortedProjects.map((project) => (
+                  <div key={project._id} onClick={() => router.push(`/projects/${project._id}?returnTab=projects`)} className="cursor-pointer">
                     <ProjectCard
                       project={project}
                       onEdit={handleEdit}
                     />
                   </div>
                 ))}
+              </div>
+            ) : projects.length > 0 ? (
+              <div className="text-center py-12">
+                <div className="w-16 h-16 bg-gradient-to-r from-blue-100 to-amber-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-semibold text-black mb-2">No projects match your filters</h3>
+                <p className="text-gray-600 mb-6">Try adjusting your search terms or filters to find more projects.</p>
+                <button
+                  onClick={clearAllFilters}
+                  className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors"
+                >
+                  Clear All Filters
+                </button>
               </div>
             ) : (
               <div className="text-center py-12">
@@ -542,7 +704,7 @@ export default function Dashboard() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                     </svg>
                   }
-                  label="Create Your First Project"
+                  label="Get Started"
                 />
               </div>
             )}
@@ -555,13 +717,98 @@ export default function Dashboard() {
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-2xl font-bold text-black">My Tasks</h2>
               <div className="text-sm text-gray-500">
-                {myTasks.filter(t => t.status !== 'completed').length} pending
+                {filteredTasks.filter(t => t.status !== 'completed').length} pending
+              </div>
+            </div>
+
+            {/* Task Search and Filter Controls */}
+            <div className="space-y-4 mb-6">
+              {/* Task Search Bar */}
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+                <input
+                  type="text"
+                  placeholder="Search tasks by title, description, or project name..."
+                  value={taskSearchTerm}
+                  onChange={(e) => setTaskSearchTerm(e.target.value)}
+                  className="block w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-sm"
+                />
+                {taskSearchTerm && (
+                  <button
+                    onClick={() => setTaskSearchTerm('')}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  >
+                    <svg className="w-4 h-4 text-gray-400 hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                )}
+              </div>
+
+              {/* Task Filter Controls */}
+              <div className="flex flex-wrap gap-4 p-4 bg-gray-50 rounded-lg">
+                {/* Task Status Filter */}
+                <div className="flex items-center gap-2">
+                  <label className="text-sm font-medium text-gray-700">Status:</label>
+                  <select
+                    value={taskStatusFilter}
+                    onChange={(e) => setTaskStatusFilter(e.target.value)}
+                    className="px-3 py-1 text-sm border border-gray-200 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                  >
+                    <option value="all">All Status</option>
+                    <option value="todo">To Do</option>
+                    <option value="in-progress">In Progress</option>
+                    <option value="completed">Completed</option>
+                  </select>
+                </div>
+
+                {/* Task Priority Filter */}
+                <div className="flex items-center gap-2">
+                  <label className="text-sm font-medium text-gray-700">Priority:</label>
+                  <select
+                    value={taskPriorityFilter}
+                    onChange={(e) => setTaskPriorityFilter(e.target.value)}
+                    className="px-3 py-1 text-sm border border-gray-200 rounded-md focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                  >
+                    <option value="all">All Priority</option>
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                  </select>
+                </div>
+
+                {/* Clear Task Filters */}
+                {(taskSearchTerm || taskStatusFilter !== 'all' || taskPriorityFilter !== 'all') && (
+                  <button
+                    onClick={clearTaskFilters}
+                    className="px-3 py-1 text-sm bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors"
+                  >
+                    Clear Filters
+                  </button>
+                )}
+              </div>
+
+              {/* Task Results Summary */}
+              <div className="flex justify-between items-center text-sm text-gray-600">
+                <span>
+                  Showing {filteredTasks.length} of {myTasks.length} tasks
+                  {taskSearchTerm && <span> matching "{taskSearchTerm}"</span>}
+                </span>
+                {filteredTasks.length !== myTasks.length && (
+                  <span className="text-amber-600 font-medium">
+                    {myTasks.length - filteredTasks.length} tasks filtered out
+                  </span>
+                )}
               </div>
             </div>
             
-            {myTasks.length > 0 ? (
+            {filteredTasks.length > 0 ? (
               <div className="space-y-4">
-                {myTasks.map((task) => (
+                {filteredTasks.map((task) => (
                   <div key={task._id} className="border border-gray-200 rounded-lg p-4 hover:shadow-sm transition-shadow">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
@@ -588,7 +835,7 @@ export default function Dashboard() {
                         <div className="flex items-center space-x-4 text-xs text-gray-500">
                           <span>
                             Project: <strong 
-                              onClick={() => router.push(`/projects/${task.projectId._id}`)} 
+                              onClick={() => router.push(`/projects/${task.projectId._id}?returnTab=tasks`)} 
                               className="text-amber-600 hover:text-amber-800 cursor-pointer"
                             >
                               {task.projectId.name}
@@ -617,6 +864,22 @@ export default function Dashboard() {
                   </div>
                 ))}
               </div>
+            ) : myTasks.length > 0 ? (
+              <div className="text-center py-12">
+                <div className="w-16 h-16 bg-gradient-to-r from-blue-100 to-amber-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+                <h3 className="text-lg font-semibold text-black mb-2">No tasks match your filters</h3>
+                <p className="text-gray-600 mb-6">Try adjusting your search terms or filters to find more tasks.</p>
+                <button
+                  onClick={clearTaskFilters}
+                  className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors"
+                >
+                  Clear Task Filters
+                </button>
+              </div>
             ) : (
               <div className="text-center py-12">
                 <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -631,23 +894,21 @@ export default function Dashboard() {
 
         {/* Calendar Tab */}
         {activeTab === 'calendar' && (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
-            <div className="w-16 h-16 bg-gradient-to-r from-amber-100 to-yellow-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
+          <ModernCard>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-black">Calendar View</h2>
+              <button
+                onClick={() => router.push('/calendar')}
+                className="text-amber-600 hover:text-amber-800 font-medium text-sm flex items-center"
+              >
+                Open Full Calendar
+                <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+              </button>
             </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">Enhanced Calendar View</h3>
-            <p className="text-gray-600 mb-6">
-              Access the full-featured calendar with project schedules, task assignments, and detailed views.
-            </p>
-            <button
-              onClick={() => router.push('/calendar')}
-              className="px-6 py-3 bg-amber-600 text-white rounded-lg hover:bg-amber-700 font-medium"
-            >
-              Open Calendar →
-            </button>
-          </div>
+            <Calendar />
+          </ModernCard>
         )}
 
         {/* Project Form Modal */}
@@ -663,5 +924,20 @@ export default function Dashboard() {
         )}
       </main>
     </div>
+  );
+}
+
+export default function Dashboard() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600 font-medium">Loading dashboard...</p>
+        </div>
+      </div>
+    }>
+      <DashboardContent />
+    </Suspense>
   );
 }

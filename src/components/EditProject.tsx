@@ -15,7 +15,7 @@ const EditProject = ({ project, onUpdate, onCancel }: EditProjectProps) => {
     description: project.description,
     status: project.status,
     priority: project.priority,
-    startDate: new Date(project.startDate).toISOString().split('T')[0],
+    startDate: project.startDate ? new Date(project.startDate).toISOString().split('T')[0] : '',
     endDate: project.endDate ? new Date(project.endDate).toISOString().split('T')[0] : '',
     progress: project.progress,
     contractId: project.contractId || '',
@@ -39,10 +39,6 @@ const EditProject = ({ project, onUpdate, onCancel }: EditProjectProps) => {
 
     if (!formData.description.trim()) {
       newErrors.description = 'Project description is required';
-    }
-
-    if (!formData.startDate) {
-      newErrors.startDate = 'Start date is required';
     }
 
     if (formData.endDate && formData.startDate) {
@@ -106,8 +102,6 @@ const EditProject = ({ project, onUpdate, onCancel }: EditProjectProps) => {
       } else {
         updateData.endDate = null;
       }
-
-      console.log('Sending update data:', updateData); // Debug log
 
       const response = await fetch(`/api/projects/${project._id}`, {
         method: 'PUT',
@@ -305,7 +299,7 @@ const EditProject = ({ project, onUpdate, onCancel }: EditProjectProps) => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 mb-2">
-                Start Date *
+                Start Date <span className="text-gray-500 text-xs">(optional)</span>
               </label>
               <input
                 type="date"
@@ -322,7 +316,7 @@ const EditProject = ({ project, onUpdate, onCancel }: EditProjectProps) => {
 
             <div>
               <label htmlFor="endDate" className="block text-sm font-medium text-gray-700 mb-2">
-                End Date
+                End Date <span className="text-gray-500 text-xs">(optional)</span>
               </label>
               <input
                 type="date"

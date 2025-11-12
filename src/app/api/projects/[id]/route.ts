@@ -99,15 +99,16 @@ export async function PUT(
     console.log('Start date:', updateData.startDate, 'End date:', updateData.endDate);
     
     // Validate required fields
-    if (!updateData.name || !updateData.description || !updateData.startDate) {
+    if (!updateData.name || !updateData.description) {
       return NextResponse.json(
-        { success: false, error: 'Name, description, and start date are required' },
+        { success: false, error: 'Name and description are required' },
         { status: 400 }
       );
     }
     
     // Validate date logic - only if both dates are provided and valid
-    if (updateData.endDate && updateData.endDate !== null && updateData.endDate.trim() !== '') {
+    if (updateData.startDate && updateData.endDate && 
+        updateData.startDate.trim() !== '' && updateData.endDate.trim() !== '') {
       const startDate = new Date(updateData.startDate);
       const endDate = new Date(updateData.endDate);
       
@@ -163,7 +164,7 @@ export async function PUT(
           description: updateData.description.trim(),
           status: updateData.status,
           priority: updateData.priority,
-          startDate: new Date(updateData.startDate),
+          startDate: updateData.startDate ? new Date(updateData.startDate) : null,
           endDate: updateData.endDate ? new Date(updateData.endDate) : null,
           progress: updateData.progress,
           contractId: updateData.contractId?.trim() || null,

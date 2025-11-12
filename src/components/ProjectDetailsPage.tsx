@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { IProject } from '@/models/Project';
 import TeamMemberManagement from '@/components/TeamMemberManagement';
 import TaskManagement from '@/components/TaskManagement';
@@ -30,6 +30,16 @@ const ProjectDetailsPage = ({ projectId }: ProjectDetailsProps) => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
   const router = useRouter();
+  const searchParams = useSearchParams();
+  
+  // Get the return tab from URL parameters, default to 'overview'
+  const returnTab = searchParams.get('returnTab') || 'overview';
+  
+  // Function to navigate back to dashboard with correct tab
+  const navigateBack = () => {
+    const url = returnTab === 'overview' ? '/dashboard' : `/dashboard?tab=${returnTab}`;
+    router.push(url);
+  };
 
   useEffect(() => {
     fetchCurrentUser();
@@ -64,7 +74,7 @@ const ProjectDetailsPage = ({ projectId }: ProjectDetailsProps) => {
       if (!response.ok) {
         if (response.status === 404) {
           alert('Project not found');
-          router.push('/dashboard');
+          navigateBack();
           return;
         }
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -76,12 +86,12 @@ const ProjectDetailsPage = ({ projectId }: ProjectDetailsProps) => {
         setProject(data.data);
       } else {
         alert(data.error || 'Project not found');
-        router.push('/dashboard');
+        navigateBack();
       }
     } catch (error) {
       console.error('Error fetching project:', error);
       alert('Failed to load project');
-      router.push('/dashboard');
+      navigateBack();
     } finally {
       setLoading(false);
     }
@@ -140,7 +150,7 @@ const ProjectDetailsPage = ({ projectId }: ProjectDetailsProps) => {
       }
       
       alert('Project deleted successfully');
-      router.push('/dashboard');
+      navigateBack();
     } catch (error) {
       console.error('Error deleting project:', error);
       alert(error instanceof Error ? error.message : 'Failed to delete project');
@@ -161,7 +171,7 @@ const ProjectDetailsPage = ({ projectId }: ProjectDetailsProps) => {
         <div className="text-center">
           <p className="text-gray-600">Project not found</p>
           <button 
-            onClick={() => router.push('/dashboard')}
+            onClick={() => navigateBack()}
             className="mt-2 text-amber-600 hover:text-amber-800"
           >
             Back to Dashboard
@@ -180,7 +190,7 @@ const ProjectDetailsPage = ({ projectId }: ProjectDetailsProps) => {
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
                 <button 
-                  onClick={() => router.push('/dashboard')}
+                  onClick={() => navigateBack()}
                   className="text-gray-400 hover:text-gray-600"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
