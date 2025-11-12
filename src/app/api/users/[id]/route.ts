@@ -4,6 +4,7 @@ import User from '@/models/User';
 import Team from '@/models/Team';
 import AuthUtils from '@/lib/auth/utils';
 import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
 
 // PUT - Update user (admin or self)
 export async function PUT(
@@ -81,6 +82,21 @@ export async function PUT(
     // Prevent users from deactivating themselves
     if (currentUser.userId === id && updateData.isActive === false) {
       delete updateData.isActive;
+    }
+
+    // Hash password if it's being updated
+    if (updateData.password) {
+      try {
+        const salt = await bcrypt.genSalt(12);
+        updateData.password = await bcrypt.hash(updateData.password, salt);
+        console.log('Password hashed for update');
+      } catch (error) {
+        console.error('Password hashing failed:', error);
+        return NextResponse.json(
+          { success: false, error: 'Password hashing failed' },
+          { status: 500 }
+        );
+      }
     }
 
     // Get the current user to check for team changes
