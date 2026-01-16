@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { IProject } from '@/models/Project';
 import { ITask } from '@/models/Task';
 import FileManager from '@/components/FileManager';
+import EnhancedTaskForm from '@/components/EnhancedTaskForm';
 import { XMarkIcon, PaperClipIcon } from '@heroicons/react/24/outline';
 
 interface User {
@@ -139,14 +140,6 @@ const TaskManagement = ({ project, currentUserRole }: TaskManagementProps) => {
   };
 
   const handleEdit = (task: TaskWithPopulatedData) => {
-    setFormData({
-      title: task.title,
-      description: task.description,
-      priority: task.priority,
-      assigneeId: task.assigneeId?._id || '',
-      dueDate: task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : '',
-      estimatedHours: task.estimatedHours?.toString() || ''
-    });
     setEditingTask(task);
     setShowCreateForm(true);
   };
@@ -245,114 +238,19 @@ const TaskManagement = ({ project, currentUserRole }: TaskManagementProps) => {
 
       {/* Create/Edit Task Form */}
       {showCreateForm && (
-        <div className="p-6 bg-gray-50 border-b border-gray-200">
-          <h4 className="text-md font-medium text-gray-900 mb-4">
-            {editingTask ? 'Edit Task' : 'Create New Task'}
-          </h4>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Title *
-                </label>
-                <input
-                  type="text"
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Priority
-                </label>
-                <select
-                  value={formData.priority}
-                  onChange={(e) => setFormData({ ...formData, priority: e.target.value as 'low' | 'medium' | 'high' })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                >
-                  <option value="low">Low</option>
-                  <option value="medium">Medium</option>
-                  <option value="high">High</option>
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Description *
-              </label>
-              <textarea
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                required
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Assign To
-                </label>
-                <select
-                  value={formData.assigneeId}
-                  onChange={(e) => setFormData({ ...formData, assigneeId: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                >
-                  <option value="">Unassigned</option>
-                  {projectMembers.map((member) => (
-                    <option key={member._id} value={member._id}>
-                      {member.firstName} {member.lastName}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Due Date
-                </label>
-                <input
-                  type="date"
-                  value={formData.dueDate}
-                  onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Estimated Hours
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  max="1000"
-                  value={formData.estimatedHours}
-                  onChange={(e) => setFormData({ ...formData, estimatedHours: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent"
-                />
-              </div>
-            </div>
-
-            <div className="flex space-x-3">
-              <button
-                type="submit"
-                className="bg-amber-900 text-white px-4 py-2 rounded-lg hover:bg-amber-800 transition-colors"
-              >
-                {editingTask ? 'Update Task' : 'Create Task'}
-              </button>
-              <button
-                type="button"
-                onClick={resetForm}
-                className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors"
-              >
-                Cancel
-              </button>
-            </div>
-          </form>
-        </div>
+        <EnhancedTaskForm
+          projectId={project._id as string}
+          onClose={() => {
+            setShowCreateForm(false);
+            setEditingTask(null);
+          }}
+          onSubmit={() => {
+            fetchTasks();
+            setShowCreateForm(false);
+            setEditingTask(null);
+          }}
+          editTask={editingTask}
+        />
       )}
 
       {/* Tasks List */}
@@ -389,6 +287,11 @@ const TaskManagement = ({ project, currentUserRole }: TaskManagementProps) => {
                       {task.assigneeId && (
                         <span>
                           Assigned to: <strong>{task.assigneeId.firstName} {task.assigneeId.lastName}</strong>
+                        </span>
+                      )}
+                      {task.startDate && (
+                        <span>
+                          Start: <strong>{new Date(task.startDate).toLocaleDateString()}</strong>
                         </span>
                       )}
                       {task.dueDate && (
@@ -509,6 +412,15 @@ const TaskManagement = ({ project, currentUserRole }: TaskManagementProps) => {
                   <div>
                     <h3 className="text-lg font-medium text-gray-900 mb-4">Timeline & Hours</h3>
                     <div className="space-y-3">
+                      {viewingTask.startDate && (
+                        <div>
+                          <label className="text-sm font-medium text-gray-500">Start Date</label>
+                          <p className="text-gray-900 mt-1">
+                            {new Date(viewingTask.startDate).toLocaleDateString()}
+                          </p>
+                        </div>
+                      )}
+
                       {viewingTask.dueDate && (
                         <div>
                           <label className="text-sm font-medium text-gray-500">Due Date</label>

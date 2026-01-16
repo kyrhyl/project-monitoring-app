@@ -7,6 +7,7 @@ import DashboardStats from '@/components/DashboardStats';
 import ProjectCard from '@/components/ProjectCard';
 import ProjectForm from '@/components/ProjectForm';
 import Calendar from '@/components/Calendar';
+import ProjectTimeline from '@/components/ProjectTimeline';
 import ModernNavigation from '@/components/ui/ModernNavigation';
 import { ModernCard, StatsCard, ActionButton } from '@/components/ui/ModernCards';
 
@@ -35,7 +36,7 @@ interface Task {
 }
 
 function DashboardContent() {
-  const [activeTab, setActiveTab] = useState<'overview' | 'projects' | 'tasks' | 'calendar'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'projects' | 'tasks' | 'calendar' | 'timeline'>('overview');
   const [projects, setProjects] = useState<IProject[]>([]);
   const [myTasks, setMyTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
@@ -61,8 +62,8 @@ function DashboardContent() {
   useEffect(() => {
     // Set the active tab based on URL parameter when component mounts
     const tabParam = searchParams.get('tab');
-    if (tabParam && ['overview', 'projects', 'tasks', 'calendar'].includes(tabParam)) {
-      setActiveTab(tabParam as 'overview' | 'projects' | 'tasks' | 'calendar');
+    if (tabParam && ['overview', 'projects', 'tasks', 'calendar', 'timeline'].includes(tabParam)) {
+      setActiveTab(tabParam as 'overview' | 'projects' | 'tasks' | 'calendar' | 'timeline');
     }
   }, [searchParams]);
 
@@ -329,6 +330,15 @@ function DashboardContent() {
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+      )
+    },
+    {
+      id: 'timeline',
+      label: 'Timeline',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
         </svg>
       )
     }
@@ -909,6 +919,13 @@ function DashboardContent() {
             </div>
             <Calendar />
           </ModernCard>
+        )}
+
+        {/* Timeline Tab */}
+        {activeTab === 'timeline' && (
+          <div>
+            <ProjectTimeline />
+          </div>
         )}
 
         {/* Project Form Modal */}

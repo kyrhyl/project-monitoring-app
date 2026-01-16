@@ -36,29 +36,23 @@ export async function GET(
       );
     }
 
-    // Check permissions - team leader can manage their team's projects, admins can manage all
-    if (currentUser.role === 'member' || 
-        (currentUser.role === 'team_leader' && project.teamId?.toString() !== currentUser.teamId)) {
-      return NextResponse.json(
-        { success: false, error: 'Insufficient permissions' },
-        { status: 403 }
-      );
-    }
-
-    // Get project members
+    // Get project members - all users can view, but only team leaders and admins can modify
     const memberIds = project.teamMembers || [];
     const members = await User.find({ 
       _id: { $in: memberIds },
       isActive: true 
     }).select('_id username firstName lastName role').lean();
 
-    // Get available team members (from the same team who aren't already assigned)
-    const team = await Team.findById(project.teamId).lean() as any;
-    const availableMembers = await User.find({
-      teamId: project.teamId,
-      _id: { $nin: memberIds },
-      isActive: true
-    }).select('_id username firstName lastName role').lean();
+    // Only team leaders and admins can see available members for assignment
+    let availableMembers: any[] = [];
+    if (currentUser.role === 'admin' || 
+        (currentUser.role === 'team_leader' && project.teamId?.toString() === currentUser.teamId)) {
+      availableMembers = await User.find({
+        teamId: project.teamId,
+        _id: { $nin: memberIds },
+        isActive: true
+      }).select('_id username firstName lastName role').lean();
+    }
 
     return NextResponse.json({
       success: true,

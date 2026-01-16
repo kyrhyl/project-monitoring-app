@@ -15,18 +15,12 @@ const ProjectForm = ({ project, onSubmit, onCancel }: ProjectFormProps) => {
     description: project?.description || '',
     status: project?.status || 'not-yet-started',
     priority: project?.priority || 'medium',
-    startDate: project?.startDate ? new Date(project.startDate).toISOString().split('T')[0] : '',
-    endDate: project?.endDate ? new Date(project.endDate).toISOString().split('T')[0] : '',
     progress: project?.progress || 0
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit({
-      ...formData,
-      startDate: formData.startDate ? new Date(formData.startDate) : undefined,
-      endDate: formData.endDate ? new Date(formData.endDate) : undefined
-    });
+    onSubmit(formData);
   };
 
   return (
@@ -93,32 +87,6 @@ const ProjectForm = ({ project, onSubmit, onCancel }: ProjectFormProps) => {
                 <option value="medium">Medium</option>
                 <option value="high">High</option>
               </select>
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Start Date <span className="text-gray-500 text-xs">(Optional)</span>
-              </label>
-              <input
-                type="date"
-                value={formData.startDate}
-                onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                End Date <span className="text-gray-500 text-xs">(Optional)</span>
-              </label>
-              <input
-                type="date"
-                value={formData.endDate}
-                onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
             </div>
           </div>
           

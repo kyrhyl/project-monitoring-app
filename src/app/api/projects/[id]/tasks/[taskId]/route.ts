@@ -3,6 +3,7 @@ import dbConnect from '@/lib/mongodb';
 import Task from '@/models/Task';
 import { Project, User } from '@/models';
 import AuthUtils from '@/lib/auth/utils';
+import { updateProjectDatesFromTasks } from '@/lib/updateProjectDates';
 import mongoose from 'mongoose';
 
 // GET - Fetch single task
@@ -111,7 +112,7 @@ export async function PUT(
     }
 
     const body = await request.json();
-    const { title, description, status, priority, assigneeId, dueDate, estimatedHours, actualHours } = body;
+    const { title, description, status, priority, phase, assigneeId, startDate, dueDate, estimatedHours, actualHours } = body;
 
     let updateData: any = {};
     
@@ -119,6 +120,8 @@ export async function PUT(
     if (description !== undefined) updateData.description = description;
     if (status !== undefined) updateData.status = status;
     if (priority !== undefined) updateData.priority = priority;
+    if (phase !== undefined) updateData.phase = phase;
+    if (startDate !== undefined) updateData.startDate = startDate ? new Date(startDate) : null;
     if (dueDate !== undefined) updateData.dueDate = dueDate ? new Date(dueDate) : null;
     if (estimatedHours !== undefined) updateData.estimatedHours = estimatedHours;
     if (actualHours !== undefined) updateData.actualHours = actualHours;
@@ -165,6 +168,9 @@ export async function PUT(
       { new: true, runValidators: true }
     ).populate('assigneeId', 'username firstName lastName')
      .populate('createdBy', 'username firstName lastName');
+
+    // Update project dates based on tasks
+    await updateProjectDatesFromTasks(id);
 
     return NextResponse.json({
       success: true,
@@ -230,6 +236,9 @@ export async function DELETE(
     }
 
     await Task.findByIdAndDelete(taskId);
+
+    // Update project dates based on remaining tasks
+    await updateProjectDatesFromTasks(id);
 
     return NextResponse.json({
       success: true,

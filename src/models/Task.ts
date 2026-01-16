@@ -19,10 +19,12 @@ export interface ITask {
   description: string;
   status: 'todo' | 'in-progress' | 'completed';
   priority: 'low' | 'medium' | 'high';
+  phase: 'architectural' | 'structural' | 'electrical' | 'mechanical' | 'final-plan' | 'final-estimate' | 'checking' | 'other';
   projectId: mongoose.Types.ObjectId;
   assigneeId?: mongoose.Types.ObjectId; // User ObjectId instead of string
   assigneeName?: string; // Keep for backward compatibility and display
   attachments?: IAttachment[]; // File attachments
+  startDate?: Date;
   dueDate?: Date;
   estimatedHours?: number;
   actualHours?: number;
@@ -67,6 +69,11 @@ const TaskSchema = new mongoose.Schema<ITask>({
     default: 'medium',
     required: true
   },
+  phase: {
+    type: String,
+    enum: ['architectural', 'structural', 'electrical', 'mechanical', 'final-plan', 'final-estimate', 'checking', 'other'],
+    required: true
+  },
   projectId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Project',
@@ -82,6 +89,9 @@ const TaskSchema = new mongoose.Schema<ITask>({
     maxLength: [100, 'Assignee name cannot exceed 100 characters']
   },
   attachments: [AttachmentSchema],
+  startDate: {
+    type: Date
+  },
   dueDate: {
     type: Date
   },

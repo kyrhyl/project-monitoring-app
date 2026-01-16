@@ -15,8 +15,6 @@ const EditProject = ({ project, onUpdate, onCancel }: EditProjectProps) => {
     description: project.description,
     status: project.status,
     priority: project.priority,
-    startDate: project.startDate ? new Date(project.startDate).toISOString().split('T')[0] : '',
-    endDate: project.endDate ? new Date(project.endDate).toISOString().split('T')[0] : '',
     progress: project.progress,
     contractId: project.contractId || '',
     contractName: project.contractName || '',
@@ -39,19 +37,6 @@ const EditProject = ({ project, onUpdate, onCancel }: EditProjectProps) => {
 
     if (!formData.description.trim()) {
       newErrors.description = 'Project description is required';
-    }
-
-    if (formData.endDate && formData.startDate) {
-      const startDate = new Date(formData.startDate);
-      const endDate = new Date(formData.endDate);
-      
-      // Compare dates by setting time to midnight for accurate comparison
-      const startDateOnly = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
-      const endDateOnly = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
-      
-      if (endDateOnly <= startDateOnly) {
-        newErrors.endDate = 'End date must be after start date';
-      }
     }
 
     if (formData.progress < 0 || formData.progress > 100) {
@@ -91,17 +76,6 @@ const EditProject = ({ project, onUpdate, onCancel }: EditProjectProps) => {
         contractDuration: formData.contractDuration,
         fundingSource: formData.fundingSource
       };
-
-      // Only include dates if they are valid
-      if (formData.startDate) {
-        updateData.startDate = new Date(formData.startDate).toISOString();
-      }
-
-      if (formData.endDate && formData.endDate.trim() !== '') {
-        updateData.endDate = new Date(formData.endDate).toISOString();
-      } else {
-        updateData.endDate = null;
-      }
 
       const response = await fetch(`/api/projects/${project._id}`, {
         method: 'PUT',
@@ -296,40 +270,10 @@ const EditProject = ({ project, onUpdate, onCancel }: EditProjectProps) => {
         {/* Timeline */}
         <div>
           <h3 className="text-lg font-medium text-gray-900 mb-4">Timeline</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 mb-2">
-                Start Date <span className="text-gray-500 text-xs">(optional)</span>
-              </label>
-              <input
-                type="date"
-                id="startDate"
-                name="startDate"
-                value={formData.startDate}
-                onChange={handleInputChange}
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 ${
-                  errors.startDate ? 'border-red-300' : 'border-gray-300'
-                }`}
-              />
-              {errors.startDate && <p className="mt-1 text-sm text-red-600">{errors.startDate}</p>}
-            </div>
-
-            <div>
-              <label htmlFor="endDate" className="block text-sm font-medium text-gray-700 mb-2">
-                End Date <span className="text-gray-500 text-xs">(optional)</span>
-              </label>
-              <input
-                type="date"
-                id="endDate"
-                name="endDate"
-                value={formData.endDate}
-                onChange={handleInputChange}
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500 ${
-                  errors.endDate ? 'border-red-300' : 'border-gray-300'
-                }`}
-              />
-              {errors.endDate && <p className="mt-1 text-sm text-red-600">{errors.endDate}</p>}
-            </div>
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <p className="text-sm text-blue-800">
+              📅 Project dates are automatically calculated from task start and end dates.
+            </p>
           </div>
         </div>
 
