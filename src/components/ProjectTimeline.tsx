@@ -17,6 +17,7 @@ interface TaskPhase {
 interface ProjectTimelineData {
   _id: string;
   name: string;
+  description?: string;
   startDate?: Date;
   endDate?: Date;
   status: string;
@@ -365,14 +366,19 @@ export default function ProjectTimeline({ initialTeamFilter, projectId, isPublic
       // If projectId is provided, fetch only that project
       if (projectId) {
         if (isPublic) {
-          // Public API: only fetch project, no tasks
-          const projectRes = await fetch(`${apiBase}/projects/${projectId}`);
+          // Public API: fetch project and tasks separately
+          const [projectRes, tasksRes] = await Promise.all([
+            fetch(`${apiBase}/projects/${projectId}`),
+            fetch(`/api/public/tasks?projectId=${projectId}`)
+          ]);
+          
           const projectData = await projectRes.json();
+          const tasksData = await tasksRes.json();
           
           if (projectData.success) {
             const project = {
               ...projectData.data,
-              tasks: [],
+              tasks: tasksData.data || [],
               teamName: 'Public'
             };
             setProjects([project]);
@@ -400,9 +406,14 @@ export default function ProjectTimeline({ initialTeamFilter, projectId, isPublic
         }
       } else {
         // Original behavior: fetch all projects
-        const url = selectedTeam && selectedTeam !== 'all' 
+        let url = selectedTeam && selectedTeam !== 'all' 
           ? `${apiBase}/projects?teamId=${selectedTeam}` 
           : `${apiBase}/projects`;
+        
+        // For public API, request all projects (high limit for timeline view)
+        if (isPublic) {
+          url += url.includes('?') ? '&limit=1000' : '?limit=1000';
+        }
         
         const res = await fetch(url);
         const data = await res.json();
@@ -411,13 +422,24 @@ export default function ProjectTimeline({ initialTeamFilter, projectId, isPublic
         const projectsList = data.projects || data.data || [];
         
         if (projectsList.length > 0) {
-          // For public API, tasks are not available separately
+          // For public API, fetch tasks for each project
           if (isPublic) {
-            const projectsWithTasks = projectsList.map((project: any) => ({
-              ...project,
-              tasks: [],
-              teamName: 'Public'
-            }));
+            const projectsWithTasks = await Promise.all(
+              projectsList.map(async (project: any) => {
+                try {
+                  const tasksRes = await fetch(`/api/public/tasks?projectId=${project._id}`);
+                  const tasksData = await tasksRes.json();
+                  return {
+                    ...project,
+                    tasks: tasksData.data || [],
+                    teamName: 'Public'
+                  };
+                } catch (error) {
+                  console.error(`Error fetching tasks for project ${project._id}:`, error);
+                  return { ...project, tasks: [], teamName: 'Public' };
+                }
+              })
+            );
             setProjects(projectsWithTasks);
             calculateDateRange(projectsWithTasks);
           } else {
@@ -876,7 +898,16 @@ export default function ProjectTimeline({ initialTeamFilter, projectId, isPublic
               </div>
             ) : viewMode === 'project' && (
               /* PROJECT VIEW */
-              projects.map((project, idx) => {
+              projects
+                .slice()
+                .sort((a, b) => {
+                  // Sort by start date (earliest first)
+                  if (!a.startDate && !b.startDate) return 0;
+                  if (!a.startDate) return 1; // Projects without dates go to end
+                  if (!b.startDate) return -1;
+                  return new Date(a.startDate).getTime() - new Date(b.startDate).getTime();
+                })
+                .map((project, idx) => {
                 const isExpanded = expandedProjects.has(project._id);
                 const projectDuration = project.startDate && project.endDate 
                   ? `${new Date(project.startDate).toLocaleDateString()} - ${new Date(project.endDate).toLocaleDateString()}`
@@ -893,7 +924,7 @@ export default function ProjectTimeline({ initialTeamFilter, projectId, isPublic
                         className="flex bg-gradient-to-r from-gray-50 to-gray-100 hover:from-blue-50 hover:to-blue-100 cursor-pointer transition-all duration-200 border-b border-gray-200 group"
                         onClick={() => toggleProject(project._id)}
                       >
-                        <div className="w-64 flex-shrink-0 py-2 px-3 flex items-center gap-2 sticky left-0 z-10 bg-gradient-to-r from-gray-50 to-gray-100 group-hover:from-blue-50 group-hover:to-blue-100 transition-all duration-200">
+                        <div className="w-80 flex-shrink-0 py-2 px-3 flex items-center gap-2 sticky left-0 z-10 bg-gradient-to-r from-gray-50 to-gray-100 group-hover:from-blue-50 group-hover:to-blue-100 transition-all duration-200">
                           {/* Expand/Collapse Icon with animation */}
                           <div className={`transition-all duration-300 ease-in-out transform ${isExpanded ? 'rotate-90 text-blue-600' : 'text-gray-500 group-hover:text-blue-600'}`}>
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -901,28 +932,12 @@ export default function ProjectTimeline({ initialTeamFilter, projectId, isPublic
                             </svg>
                           </div>
                           <div className="flex-1 min-w-0">
-                            <div className="font-bold text-gray-900 text-sm truncate group-hover:text-blue-900 transition-colors" title={project.name}>{project.name}</div>
-                            <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                              {project.teamName && project.teamName !== 'Unassigned' && (
-                                <span className="bg-white px-1.5 py-0.5 rounded text-[10px] border border-gray-300 group-hover:border-blue-300 group-hover:bg-blue-50 transition-colors">
-                                  👥 {project.teamName}
-                                </span>
-                              )}
-                              <span className={`px-1.5 py-0.5 rounded text-white text-[10px] font-medium shadow-sm ${
-                                project.status === 'completed' ? 'bg-green-600' :
-                                project.status === 'on-going' ? 'bg-blue-600' :
-                                project.status === 'submitted' ? 'bg-orange-500' :
-                                'bg-gray-500'
-                              }`}>
-                                {project.status}
-                              </span>
-                              <span className="text-[10px] text-gray-600 group-hover:text-blue-700 transition-colors">
-                                📅 {durationDays > 0 ? `${durationDays}d` : 'No dates'}
-                              </span>
-                              <span className="text-[10px] text-indigo-600 font-medium group-hover:text-indigo-700 transition-colors">
-                                {isExpanded ? '📂' : '📁'} {project.tasks.length} task{project.tasks.length !== 1 ? 's' : ''}
-                              </span>
-                            </div>
+                            <div className="font-bold text-gray-900 text-xs truncate group-hover:text-blue-900 transition-colors" title={project.name}>{project.name}</div>
+                            {project.description && (
+                              <div className={`text-[10px] text-gray-600 mt-0.5 leading-snug ${isExpanded ? 'line-clamp-4' : 'line-clamp-2'}`} title={project.description}>
+                                {project.description}
+                              </div>
+                            )}
                           </div>
                         </div>
                         <div className="flex-1 relative py-2">
