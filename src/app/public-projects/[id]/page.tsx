@@ -268,7 +268,7 @@ export default function PublicProjectDetailPage({ params }: { params: Promise<{ 
               Project Timeline & Tasks
             </h3>
             <div className="mt-4">
-              <ProjectTimeline projectId={project._id} compact={true} />
+              <ProjectTimeline projectId={project._id} compact={true} isPublic={true} />
             </div>
           </div>          {/* Geotagged Photos with GPS Verification */}
           {project.geotaggedPhotos && project.geotaggedPhotos.length > 0 && (

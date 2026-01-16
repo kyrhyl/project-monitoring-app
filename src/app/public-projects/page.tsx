@@ -555,7 +555,7 @@ export default function PublicProjectsPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-2">
             <div className="h-[calc(100vh-8rem)] overflow-y-auto">
-              <ProjectTimeline compact={true} />
+              <ProjectTimeline compact={true} isPublic={true} />
             </div>
           </div>
         </div>

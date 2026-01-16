@@ -29,6 +29,7 @@ interface TimelineProps {
   initialTeamFilter?: string;
   projectId?: string; // Optional: if provided, show only this project
   compact?: boolean; // Optional: compact view mode
+  isPublic?: boolean; // Optional: use public API endpoints
 }
 
 type ViewMode = 'project' | 'member';
@@ -288,7 +289,7 @@ const analyzeResourceAvailability = (allProjects: ProjectTimelineData[], dateRan
   }).sort((a, b) => b.utilizationPercent - a.utilizationPercent);
 };
 
-export default function ProjectTimeline({ initialTeamFilter, projectId }: TimelineProps) {
+export default function ProjectTimeline({ initialTeamFilter, projectId, isPublic = false }: TimelineProps) {
   const [projects, setProjects] = useState<ProjectTimelineData[]>([]);
   const [teams, setTeams] = useState<{ _id: string; name: string }[]>([]);
   const [selectedTeam, setSelectedTeam] = useState<string>(initialTeamFilter || 'all');
@@ -358,30 +359,50 @@ export default function ProjectTimeline({ initialTeamFilter, projectId }: Timeli
   const fetchProjects = async () => {
     setLoading(true);
     try {
+      // Determine API base path based on isPublic prop
+      const apiBase = isPublic ? '/api/public' : '/api';
+      
       // If projectId is provided, fetch only that project
       if (projectId) {
-        const [projectRes, tasksRes] = await Promise.all([
-          fetch(`/api/projects/${projectId}`),
-          fetch(`/api/projects/${projectId}/tasks`)
-        ]);
-        
-        const projectData = await projectRes.json();
-        const tasksData = await tasksRes.json();
-        
-        if (projectData.success) {
-          const project = {
-            ...projectData.data,
-            tasks: tasksData.data || [],
-            teamName: projectData.data.teamId?.name || 'Unassigned'
-          };
-          setProjects([project]);
-          calculateDateRange([project]);
+        if (isPublic) {
+          // Public API: only fetch project, no tasks
+          const projectRes = await fetch(`${apiBase}/projects/${projectId}`);
+          const projectData = await projectRes.json();
+          
+          if (projectData.success) {
+            const project = {
+              ...projectData.data,
+              tasks: [],
+              teamName: 'Public'
+            };
+            setProjects([project]);
+            calculateDateRange([project]);
+          }
+        } else {
+          // Authenticated API: fetch project and tasks
+          const [projectRes, tasksRes] = await Promise.all([
+            fetch(`${apiBase}/projects/${projectId}`),
+            fetch(`/api/projects/${projectId}/tasks`)
+          ]);
+          
+          const projectData = await projectRes.json();
+          const tasksData = await tasksRes.json();
+          
+          if (projectData.success) {
+            const project = {
+              ...projectData.data,
+              tasks: tasksData.data || [],
+              teamName: projectData.data.teamId?.name || 'Unassigned'
+            };
+            setProjects([project]);
+            calculateDateRange([project]);
+          }
         }
       } else {
         // Original behavior: fetch all projects
         const url = selectedTeam && selectedTeam !== 'all' 
-          ? `/api/projects?teamId=${selectedTeam}` 
-          : '/api/projects';
+          ? `${apiBase}/projects?teamId=${selectedTeam}` 
+          : `${apiBase}/projects`;
         
         const res = await fetch(url);
         const data = await res.json();
@@ -390,27 +411,38 @@ export default function ProjectTimeline({ initialTeamFilter, projectId }: Timeli
         const projectsList = data.projects || data.data || [];
         
         if (projectsList.length > 0) {
-          // Fetch tasks for each project
-          const projectsWithTasks = await Promise.all(
-            projectsList.map(async (project: any) => {
-              try {
-                const tasksRes = await fetch(`/api/projects/${project._id}/tasks`);
-                const tasksData = await tasksRes.json();
-                return {
-                  ...project,
-                  tasks: tasksData.data || tasksData.tasks || [],
-                  teamName: project.teamId?.name || 'Unassigned'
-                };
-              } catch (error) {
-                console.error(`Error fetching tasks for project ${project._id}:`, error);
-                return { ...project, tasks: [], teamName: 'Unassigned' };
-              }
-            })
-          );
+          // For public API, tasks are not available separately
+          if (isPublic) {
+            const projectsWithTasks = projectsList.map((project: any) => ({
+              ...project,
+              tasks: [],
+              teamName: 'Public'
+            }));
+            setProjects(projectsWithTasks);
+            calculateDateRange(projectsWithTasks);
+          } else {
+            // Fetch tasks for each project (authenticated API)
+            const projectsWithTasks = await Promise.all(
+              projectsList.map(async (project: any) => {
+                try {
+                  const tasksRes = await fetch(`/api/projects/${project._id}/tasks`);
+                  const tasksData = await tasksRes.json();
+                  return {
+                    ...project,
+                    tasks: tasksData.data || tasksData.tasks || [],
+                    teamName: project.teamId?.name || 'Unassigned'
+                  };
+                } catch (error) {
+                  console.error(`Error fetching tasks for project ${project._id}:`, error);
+                  return { ...project, tasks: [], teamName: 'Unassigned' };
+                }
+              })
+            );
 
-          setProjects(projectsWithTasks);
-          calculateDateRange(projectsWithTasks);
-          setConflicts(detectConflicts(projectsWithTasks));
+            setProjects(projectsWithTasks);
+            calculateDateRange(projectsWithTasks);
+            setConflicts(detectConflicts(projectsWithTasks));
+          }
         }
       }
     } catch (error) {
