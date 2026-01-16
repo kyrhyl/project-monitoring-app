@@ -117,7 +117,7 @@ export async function PUT(
     
     if (memberIds && memberIds.length > 0) {
       await User.updateMany(
-        { _id: { $in: memberIds } },
+        { _id: { $in: memberIds.map((id: any) => id.toString()) } },
         { teamId: id }
       );
     }

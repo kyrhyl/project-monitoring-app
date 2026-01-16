@@ -154,7 +154,7 @@ export async function PUT(
         const assignee = await User.findOne({
           _id: assigneeId,
           $or: [
-            { _id: { $in: project.teamMembers || [] } },
+            { _id: { $in: (project.teamMembers || []).map((id: any) => id.toString()) } },
             { teamId: project.teamId }
           ],
           isActive: true

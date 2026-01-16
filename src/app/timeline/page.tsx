@@ -105,8 +105,8 @@ export default function TimelinePage() {
         </div>
       </nav>
 
-      {/* Main Content - Removed padding to save space */}
-      <div className="max-w-full px-2 py-2">
+      {/* Main Content - Fixed height container */}
+      <div className="h-[calc(100vh-4rem)] overflow-hidden px-2 py-2">
         <ProjectTimeline />
       </div>
     </div>

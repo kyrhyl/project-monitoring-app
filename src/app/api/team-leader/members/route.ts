@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
     
     // Get detailed team member information with their assignment history
     const teamMembers = await User.find({
-      _id: { $in: currentMembers },
+      _id: { $in: currentMembers.map((id: any) => id.toString()) },
       isActive: true
     }).select('_id username firstName lastName email role createdAt teamId').lean();
 
@@ -75,7 +75,7 @@ export async function GET(request: NextRequest) {
             $or: [
               { createdBy: member._id },
               { assignedMembers: member._id },
-              { _id: { $in: memberProjectIds } } // Include projects where user has active tasks
+              { _id: { $in: memberProjectIds.map((id: any) => id.toString()) } } // Include projects where user has active tasks
             ]
           },
           { 

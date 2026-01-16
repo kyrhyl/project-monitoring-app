@@ -48,21 +48,52 @@ A comprehensive team management and project monitoring application built with Ne
 - **Deployment**: Vercel
 - **API**: Next.js API Routes (Serverless Functions)
 
+## 📁 Project Structure
+
+```
+project-monitoring-app/
+├── docs/                    # Documentation and guides
+├── scripts/                 # Setup and maintenance scripts
+├── src/
+│   ├── app/                # Next.js App Router pages
+│   ├── components/         # React components
+│   ├── lib/                # Utilities and helpers
+│   └── models/             # MongoDB models
+├── public/                 # Static assets
+└── .env.local              # Environment variables (not committed)
+```
+
 ## Quick Start
 
 ### 1. Environment Setup
 
-Create a `.env.local` file with your MongoDB Atlas connection string:
+Copy `.env.example` to `.env.local` and configure your environment variables:
 
 ```bash
-MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/project-monitoring?retryWrites=true&w=majority
-NODE_ENV=development
+cp .env.example .env.local
 ```
+
+Edit `.env.local` with your actual credentials:
+- `MONGODB_URI`: Your MongoDB Atlas connection string
+- `JWT_SECRET`: A secure random string for JWT tokens
+- `CLOUDINARY_*`: Your Cloudinary credentials (if using file uploads)
 
 ### 2. Install Dependencies
 
 ```bash
 npm install
+```
+
+### 3. Setup Admin User (First Time Only)
+
+```bash
+npm run setup:admin
+```
+
+### 4. Run Development Server
+
+```bash
+npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) to view the application.
@@ -79,12 +110,26 @@ npx vercel
 
 In your Vercel dashboard, add:
 - `MONGODB_URI`: Your MongoDB Atlas connection string
+- `JWT_SECRET`: Your JWT secret key
+- `NODE_ENV`: production
 
 ### 3. Deploy
 
 ```bash
 npx vercel --prod
 ```
+
+## Available Scripts
+
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm start` - Start production server
+- `npm run lint` - Run ESLint
+- `npm run lint:fix` - Fix linting issues
+- `npm run type-check` - Run TypeScript type checking
+- `npm run setup:admin` - Create initial admin user
+- `npm run setup:team-leader` - Create team leader user
+- `npm run sync:teams` - Synchronize teams data
 
 ## API Endpoints
 

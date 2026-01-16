@@ -141,7 +141,7 @@ export async function POST(
       const assignee = await User.findOne({
         _id: assigneeId,
         $or: [
-          { _id: { $in: project.teamMembers || [] } }, // Assigned to project
+          { _id: { $in: (project.teamMembers || []).map((id: any) => id.toString()) } }, // Assigned to project
           { teamId: project.teamId } // Or from the same team
         ],
         isActive: true

@@ -39,7 +39,7 @@ export async function GET(
     // Get project members - all users can view, but only team leaders and admins can modify
     const memberIds = project.teamMembers || [];
     const members = await User.find({ 
-      _id: { $in: memberIds },
+      _id: { $in: memberIds.map((id: any) => id.toString()) },
       isActive: true 
     }).select('_id username firstName lastName role').lean();
 
@@ -130,7 +130,7 @@ export async function POST(
 
     // Verify that all users are from the same team
     const users = await User.find({ 
-      _id: { $in: memberIds },
+      _id: { $in: memberIds.map((id: any) => id.toString()) },
       teamId: project.teamId,
       isActive: true 
     });

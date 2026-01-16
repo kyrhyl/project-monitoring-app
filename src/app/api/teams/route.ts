@@ -146,7 +146,7 @@ export async function POST(request: NextRequest) {
       
       // Update users' teamId
       await User.updateMany(
-        { _id: { $in: memberIds } },
+        { _id: { $in: memberIds.map((id: any) => id.toString()) } },
         { teamId: team._id }
       );
     }

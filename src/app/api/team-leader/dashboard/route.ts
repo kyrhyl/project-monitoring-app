@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
     
     // Get detailed team member information
     const teamMembers = await User.find({
-      _id: { $in: currentMembers },
+      _id: { $in: currentMembers.map((id: any) => id.toString()) },
       isActive: true
     }).select('_id username firstName lastName email role createdAt').lean();
 

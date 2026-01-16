@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import ProjectTimeline from '@/components/ProjectTimeline';
 
 interface PublicProject {
   _id: string;
@@ -54,6 +55,7 @@ export default function PublicProjectsPage() {
   });
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [activeStatusFilter, setActiveStatusFilter] = useState('');
+  const [viewMode, setViewMode] = useState<'overview' | 'timeline'>('overview');
 
   const router = useRouter();
 
@@ -191,7 +193,7 @@ export default function PublicProjectsPage() {
       {/* Compact Header */}
       <div className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
                 Public Project Portal
@@ -200,18 +202,59 @@ export default function PublicProjectsPage() {
                 Transparency dashboard for public projects and progress
               </p>
             </div>
-            <div className="mt-3 sm:mt-0">
+            
+            {/* Navigation Tabs - Inline */}
+            <nav className="flex gap-3">
               <button
-                onClick={() => router.push('/')}
-                className="text-amber-600 hover:text-amber-800 font-medium text-sm"
+                onClick={() => setViewMode('overview')}
+                className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+                  viewMode === 'overview'
+                    ? 'bg-amber-900 text-white shadow-md'
+                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                }`}
               >
-                ← Back to Main Portal
+                <span className="flex items-center gap-2">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                  Project Overview
+                </span>
+              </button>
+              <button
+                onClick={() => setViewMode('timeline')}
+                className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
+                  viewMode === 'timeline'
+                    ? 'bg-amber-900 text-white shadow-md'
+                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                }`}
+              >
+                <span className="flex items-center gap-2">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                  Projects Timeline
+                </span>
+              </button>
+            </nav>
+            
+            <div className="lg:ml-auto">
+              <button
+                onClick={() => router.push('/login')}
+                className="bg-gradient-to-r from-amber-900 to-yellow-900 hover:from-amber-800 hover:to-yellow-800 text-white font-medium px-6 py-2.5 rounded-lg transition-all transform hover:scale-105 shadow-md flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                </svg>
+                Login
               </button>
             </div>
           </div>
         </div>
       </div>
 
+      {/* Overview Mode */}
+      {viewMode === 'overview' && (
+      <>
       {/* Compact Statistics Section */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
@@ -283,26 +326,6 @@ export default function PublicProjectsPage() {
               <div className="text-xl font-bold text-green-600">{stats.approved}</div>
               <div className="text-xs text-green-800">Approved</div>
             </button>
-          </div>
-          
-          {/* Compact Calendar Action Button */}
-          <div className="mt-4 text-center">{/* Reduced from mt-6 to mt-4 */}
-            <button
-              onClick={() => router.push('/calendar')}
-              className="inline-flex items-center px-4 py-2 bg-gradient-to-r from-amber-600 to-orange-600 
-                         text-white font-medium rounded-lg shadow-md text-sm
-                         transform transition-all duration-200 ease-out
-                         hover:scale-105 hover:shadow-lg hover:from-amber-700 hover:to-orange-700
-                         active:scale-95 focus:outline-none focus:ring-1 focus:ring-amber-500"
-            >
-              <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 002 2z" />
-              </svg>
-              📅 View Calendar & Timeline
-            </button>
-            <p className="mt-1 text-xs text-gray-600">
-              See projects and tasks with schedules and assignments
-            </p>
           </div>
         </div>
       </div>
@@ -515,6 +538,19 @@ export default function PublicProjectsPage() {
           </div>
         )}
       </div>
+      </>
+      )}
+
+      {/* Timeline Mode */}
+      {viewMode === 'timeline' && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-2">
+            <div className="h-[calc(100vh-8rem)] overflow-y-auto">
+              <ProjectTimeline compact={true} />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

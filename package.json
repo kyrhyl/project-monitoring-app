@@ -6,7 +6,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "type-check": "tsc --noEmit",
+    "setup:admin": "node scripts/setup-admin.js",
+    "setup:team-leader": "node scripts/setup-team-leader.js",
+    "sync:teams": "node scripts/sync-teams.js"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
@@ -17,27 +22,25 @@
     "@types/multer": "^2.0.0",
     "bcryptjs": "^3.0.3",
     "cloudinary": "^2.8.0",
-    "dotenv": "^17.2.3",
     "js-cookie": "^3.0.5",
-    "jsonwebtoken": "^9.0.2",
+    "jsonwebtoken": "^9.0.3",
     "lucide-react": "^0.562.0",
-    "mongodb": "^6.20.0",
-    "mongoose": "^8.19.3",
+    "mongodb": "^7.0.0",
+    "mongoose": "^9.1.4",
     "multer": "^2.0.2",
-    "next": "16.0.1",
-    "next-cloudinary": "^6.17.4",
-    "node-fetch": "^3.3.2",
-    "react": "19.2.0",
-    "react-dom": "19.2.0"
+    "next": "^16.1.2",
+    "next-cloudinary": "^6.17.5",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
-    "eslint": "^9",
-    "eslint-config-next": "16.0.1",
-    "tailwindcss": "^4",
+    "@tailwindcss/postcss": "^4.1.18",
+    "@types/node": "^25.0.9",
+    "@types/react": "^19.2.8",
+    "@types/react-dom": "^19.2.3",
+    "eslint": "^9.39.2",
+    "eslint-config-next": "^16.1.2",
+    "tailwindcss": "^4.1.18",
     "typescript": "^5"
   }
 }

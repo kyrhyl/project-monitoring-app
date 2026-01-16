@@ -510,9 +510,9 @@ export default function ProjectTimeline({ initialTeamFilter, projectId }: Timeli
   const totalConflicts = conflicts.size;
 
   return (
-    <div className="bg-white rounded-lg shadow-lg p-4">
+    <div className="bg-white rounded-lg shadow-lg p-4 h-full flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-4 flex-shrink-0">
         <div>
           <h1 className="text-xl font-bold text-gray-800">
             {projectId ? 'Task Timeline' : 'Project Timeline'}
@@ -602,7 +602,7 @@ export default function ProjectTimeline({ initialTeamFilter, projectId }: Timeli
 
       {/* Planning Panel */}
       {showPlanningPanel && !projectId && !loading && (
-        <div className="mb-6 bg-gradient-to-br from-indigo-50 to-purple-50 border-2 border-indigo-200 rounded-xl p-6 shadow-lg">
+        <div className="mb-4 bg-gradient-to-br from-indigo-50 to-purple-50 border-2 border-indigo-200 rounded-xl p-6 shadow-lg flex-shrink-0">
           <h3 className="text-2xl font-bold text-indigo-900 mb-6 flex items-center gap-3">
             <span className="text-3xl">📊</span>
             Project Planning & Resource Analysis
@@ -791,21 +791,21 @@ export default function ProjectTimeline({ initialTeamFilter, projectId }: Timeli
       )}
 
       {loading ? (
-        <div className="flex justify-center items-center py-20">
+        <div className="flex justify-center items-center py-20 flex-1">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
         </div>
       ) : (
-        <div>
+        <div className="flex-1 flex flex-col overflow-hidden">
           {/* Top Scrollbar Mirror */}
           <div className="overflow-x-auto overflow-y-hidden border-b border-gray-300 bg-gray-50" id="top-scroll">
             <div className="min-w-[1200px] h-3"></div>
           </div>
           
-          <div className="overflow-x-auto" id="main-scroll">
+          <div className="flex-1 overflow-auto" id="main-scroll">
             <div className="min-w-[1200px]">
               {/* Date Headers - Sticky */}
-              <div className="flex border-b-2 border-gray-300 sticky top-0 z-20 bg-white shadow-md">
-              <div className="w-64 flex-shrink-0 font-semibold text-gray-700 py-4 px-4 bg-gray-100 text-base sticky left-0 z-10 shadow-[2px_0_5px_rgba(0,0,0,0.1)]">
+              <div className="flex border-b-2 border-gray-300 sticky top-0 z-30 bg-white shadow-md">
+              <div className="w-64 flex-shrink-0 font-semibold text-gray-700 py-4 px-4 bg-gray-100 text-base sticky left-0 z-40 shadow-[2px_0_5px_rgba(0,0,0,0.1)]">
                 {projectId ? 'TASK / ASSIGNED TO' : 'PROJECT NAME'}
               </div>
               <div className="flex-1 flex">
@@ -857,25 +857,25 @@ export default function ProjectTimeline({ initialTeamFilter, projectId }: Timeli
                     {/* Project Header - Clickable Accordion */}
                     {!projectId && (
                       <div 
-                        className="flex bg-gradient-to-r from-gray-50 to-gray-100 hover:from-blue-50 hover:to-blue-100 cursor-pointer transition-all border-b border-gray-200"
+                        className="flex bg-gradient-to-r from-gray-50 to-gray-100 hover:from-blue-50 hover:to-blue-100 cursor-pointer transition-all duration-200 border-b border-gray-200 group"
                         onClick={() => toggleProject(project._id)}
                       >
-                        <div className="w-64 flex-shrink-0 py-2 px-3 flex items-center gap-2 sticky left-0 z-10 bg-gradient-to-r from-gray-50 to-gray-100">
-                          {/* Expand/Collapse Icon */}
-                          <div className={`transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}>
-                            <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        <div className="w-64 flex-shrink-0 py-2 px-3 flex items-center gap-2 sticky left-0 z-10 bg-gradient-to-r from-gray-50 to-gray-100 group-hover:from-blue-50 group-hover:to-blue-100 transition-all duration-200">
+                          {/* Expand/Collapse Icon with animation */}
+                          <div className={`transition-all duration-300 ease-in-out transform ${isExpanded ? 'rotate-90 text-blue-600' : 'text-gray-500 group-hover:text-blue-600'}`}>
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
                             </svg>
                           </div>
                           <div className="flex-1 min-w-0">
-                            <div className="font-bold text-gray-900 text-sm truncate" title={project.name}>{project.name}</div>
+                            <div className="font-bold text-gray-900 text-sm truncate group-hover:text-blue-900 transition-colors" title={project.name}>{project.name}</div>
                             <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                               {project.teamName && project.teamName !== 'Unassigned' && (
-                                <span className="bg-white px-1.5 py-0.5 rounded text-[10px] border border-gray-300">
-                                  {project.teamName}
+                                <span className="bg-white px-1.5 py-0.5 rounded text-[10px] border border-gray-300 group-hover:border-blue-300 group-hover:bg-blue-50 transition-colors">
+                                  👥 {project.teamName}
                                 </span>
                               )}
-                              <span className={`px-1.5 py-0.5 rounded text-white text-[10px] font-medium ${
+                              <span className={`px-1.5 py-0.5 rounded text-white text-[10px] font-medium shadow-sm ${
                                 project.status === 'completed' ? 'bg-green-600' :
                                 project.status === 'on-going' ? 'bg-blue-600' :
                                 project.status === 'submitted' ? 'bg-orange-500' :
@@ -883,11 +883,11 @@ export default function ProjectTimeline({ initialTeamFilter, projectId }: Timeli
                               }`}>
                                 {project.status}
                               </span>
-                              <span className="text-[10px] text-gray-600">
+                              <span className="text-[10px] text-gray-600 group-hover:text-blue-700 transition-colors">
                                 📅 {durationDays > 0 ? `${durationDays}d` : 'No dates'}
                               </span>
-                              <span className="text-[10px] text-indigo-600 font-medium">
-                                {project.tasks.length} task{project.tasks.length !== 1 ? 's' : ''}
+                              <span className="text-[10px] text-indigo-600 font-medium group-hover:text-indigo-700 transition-colors">
+                                {isExpanded ? '📂' : '📁'} {project.tasks.length} task{project.tasks.length !== 1 ? 's' : ''}
                               </span>
                             </div>
                           </div>
@@ -914,11 +914,13 @@ export default function ProjectTimeline({ initialTeamFilter, projectId }: Timeli
                     )}
 
                     {/* Task rows - Only show when expanded or in single project view */}
-                    {(isExpanded || projectId) && (
-                      project.tasks.length === 0 ? (
-                        <div className="flex py-4 bg-white">
+                    <div className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                      (isExpanded || projectId) ? 'max-h-[10000px] opacity-100' : 'max-h-0 opacity-0'
+                    }`}>
+                      {project.tasks.length === 0 ? (
+                        <div className="flex py-4 bg-white border-t border-gray-200">
                           <div className="w-64 flex-shrink-0 px-4 text-sm text-gray-500 italic pl-16">
-                            No tasks assigned
+                            💭 No tasks assigned yet
                           </div>
                         </div>
                       ) : (
@@ -1012,8 +1014,8 @@ export default function ProjectTimeline({ initialTeamFilter, projectId }: Timeli
                         </div>
                       );
                     })
-                      )
-                    )}
+                      )}
+                    </div>
                   </div>
                 );
               })
@@ -1256,60 +1258,56 @@ export default function ProjectTimeline({ initialTeamFilter, projectId }: Timeli
         </div>
       )}
 
-      {/* Legend */}
-      <div className="mt-8 p-4 bg-gray-50 rounded-lg border border-gray-200">
-        <div className="mb-4">
-          <div className="flex items-center gap-6 text-sm flex-wrap">
-            <span className="font-bold text-gray-800 text-base">PHASES:</span>
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded bg-yellow-400 shadow"></div>
-              <span className="text-gray-700 font-medium">Architectural</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded bg-teal-500 shadow"></div>
-              <span className="text-gray-700 font-medium">Structural</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded bg-orange-500 shadow"></div>
-              <span className="text-gray-700 font-medium">Electrical</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded bg-purple-500 shadow"></div>
-              <span className="text-gray-700 font-medium">Mechanical</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded bg-yellow-500 shadow"></div>
-              <span className="text-gray-700 font-medium">Final Plan</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded bg-blue-400 shadow"></div>
-              <span className="text-gray-700 font-medium">Final Estimate</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded bg-pink-400 shadow"></div>
-              <span className="text-gray-700 font-medium">Checking</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded bg-gray-400 shadow"></div>
-              <span className="text-gray-700 font-medium">Other</span>
-            </div>
+      {/* Legend - Compact */}
+      <div className="mt-4 p-2 bg-gray-50 rounded border border-gray-200">
+        <div className="flex items-center gap-4 text-xs flex-wrap mb-2">
+          <span className="font-bold text-gray-800 text-sm">PHASES:</span>
+          <div className="flex items-center gap-1.5">
+            <div className="w-4 h-4 rounded bg-yellow-400"></div>
+            <span className="text-gray-700">Architectural</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-4 h-4 rounded bg-teal-500"></div>
+            <span className="text-gray-700">Structural</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-4 h-4 rounded bg-orange-500"></div>
+            <span className="text-gray-700">Electrical</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-4 h-4 rounded bg-purple-500"></div>
+            <span className="text-gray-700">Mechanical</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-4 h-4 rounded bg-yellow-500"></div>
+            <span className="text-gray-700">Final Plan</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-4 h-4 rounded bg-blue-400"></div>
+            <span className="text-gray-700">Final Estimate</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-4 h-4 rounded bg-pink-400"></div>
+            <span className="text-gray-700">Checking</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-4 h-4 rounded bg-gray-400"></div>
+            <span className="text-gray-700">Other</span>
           </div>
         </div>
-        <div className="border-t border-gray-300 pt-3">
-          <div className="flex items-center gap-6 text-sm flex-wrap">
-            <span className="font-bold text-gray-800 text-base">COMPLETION STATUS:</span>
-            <div className="flex items-center gap-2">
-              <div className="w-5 h-5 rounded-full bg-green-500 shadow flex items-center justify-center text-white text-xs font-bold">✓</div>
-              <span className="text-gray-700 font-medium">Completed Early</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-5 h-5 rounded-full bg-blue-500 shadow flex items-center justify-center text-white text-xs font-bold">✓</div>
-              <span className="text-gray-700 font-medium">Completed On Time</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-5 h-5 rounded-full bg-red-500 shadow flex items-center justify-center text-white text-xs font-bold">!</div>
-              <span className="text-gray-700 font-medium">Completed Late</span>
-            </div>
+        <div className="flex items-center gap-4 text-xs flex-wrap">
+          <span className="font-bold text-gray-800 text-sm">COMPLETION STATUS:</span>
+          <div className="flex items-center gap-1.5">
+            <div className="w-4 h-4 rounded-full bg-green-500 flex items-center justify-center text-white text-[10px] font-bold">✓</div>
+            <span className="text-gray-700">Completed Early</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-4 h-4 rounded-full bg-blue-500 flex items-center justify-center text-white text-[10px] font-bold">✓</div>
+            <span className="text-gray-700">Completed On Time</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-4 h-4 rounded-full bg-red-500 flex items-center justify-center text-white text-[10px] font-bold">!</div>
+            <span className="text-gray-700">Completed Late</span>
           </div>
         </div>
       </div>

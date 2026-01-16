@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
+import { logger } from '@/lib/logger';
 
 interface CalendarProject {
   _id: string;
@@ -55,66 +56,118 @@ const Calendar = () => {
   const fetchCalendarData = async () => {
     try {
       setLoading(true);
+      setError(''); // Clear previous errors
 
       const response = await fetch('/api/calendar', {
-        credentials: 'include' // Include cookies for authentication
+        method: 'GET',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        cache: 'no-store', // Don't cache calendar data
       });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch calendar data');
+        if (response.status === 401) {
+          throw new Error('Authentication required. Please log in again.');
+        } else if (response.status === 404) {
+          throw new Error('User not found.');
+        } else if (response.status === 500) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || 'Server error occurred. Please try again.');
+        } else {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || `Unexpected error: ${response.status}`);
+        }
       }
 
       const data = await response.json();
       
+      // Validate response data
+      if (!data || (!data.projects && !data.tasks)) {
+        logger.warn('Invalid calendar data structure', { context: 'Calendar', data });
+        // Don't throw error, just use empty arrays
+        setCalendarData([]);
+        return;
+      }
+      
       const items: CalendarItem[] = [];
       
       // Add projects
-      data.projects.forEach((project: CalendarProject) => {
-        if (project.startDate) {
-          items.push({
-            id: project._id,
-            title: project.name,
-            date: new Date(project.startDate),
-            type: 'project',
-            status: project.status,
-            priority: project.priority,
-            isStart: true
-          });
-        }
-        
-        if (project.endDate) {
-          items.push({
-            id: `${project._id}-end`,
-            title: `${project.name} (End)`,
-            date: new Date(project.endDate),
-            type: 'project',
-            status: project.status,
-            priority: project.priority,
-            isEnd: true
-          });
-        }
-      });
+      if (data.projects && Array.isArray(data.projects)) {
+        data.projects.forEach((project: CalendarProject) => {
+          try {
+            if (project.startDate) {
+              items.push({
+                id: project._id,
+                title: project.name,
+                date: new Date(project.startDate),
+                type: 'project',
+                status: project.status,
+                priority: project.priority,
+                isStart: true
+              });
+            }
+            
+            if (project.endDate) {
+              items.push({
+                id: `${project._id}-end`,
+                title: `${project.name} (End)`,
+                date: new Date(project.endDate),
+                type: 'project',
+                status: project.status,
+                priority: project.priority,
+                isEnd: true
+              });
+            }
+          } catch (err) {
+            logger.warn('Error processing project for calendar', err, { 
+              context: 'Calendar', 
+              projectId: project._id 
+            });
+          }
+        });
+      }
 
       // Add tasks
-      data.tasks.forEach((task: CalendarTask) => {
-        if (task.dueDate) {
-          items.push({
-            id: task._id,
-            title: task.title,
-            date: new Date(task.dueDate),
-            type: 'task',
-            status: task.status,
-            priority: task.priority,
-            projectName: task.projectName,
-            assigneeName: task.assigneeName
-          });
-        }
-      });
+      if (data.tasks && Array.isArray(data.tasks)) {
+        data.tasks.forEach((task: CalendarTask) => {
+          try {
+            if (task.dueDate) {
+              items.push({
+                id: task._id,
+                title: task.title,
+                date: new Date(task.dueDate),
+                type: 'task',
+                status: task.status,
+                priority: task.priority,
+                projectName: task.projectName,
+                assigneeName: task.assigneeName
+              });
+            }
+          } catch (err) {
+            logger.warn('Error processing task for calendar', err, { 
+              context: 'Calendar', 
+              taskId: task._id 
+            });
+          }
+        });
+      }
 
       setCalendarData(items);
+      setError(''); // Clear error on success
     } catch (error) {
-      console.error('Error fetching calendar data:', error);
-      setError('Failed to load calendar data');
+      let errorMessage = 'Failed to load calendar data';
+      
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        errorMessage = 'Network error: Unable to connect to server. Please check your internet connection.';
+      } else if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
+      logger.error('Error fetching calendar data', error, { context: 'Calendar' });
+      setError(errorMessage);
+      setCalendarData([]); // Clear data on error
     } finally {
       setLoading(false);
     }
@@ -244,8 +297,24 @@ const Calendar = () => {
 
   if (error) {
     return (
-      <div className="text-center text-red-600 bg-red-50 border border-red-200 rounded-lg p-4">
-        {error}
+      <div className="bg-white rounded-lg shadow-lg p-6">
+        <div className="text-center">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-6 mb-4">
+            <div className="text-red-600 text-lg font-semibold mb-2">
+              ⚠️ Error Loading Calendar
+            </div>
+            <p className="text-red-700 mb-4">{error}</p>
+            <button
+              onClick={fetchCalendarData}
+              className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg transition-colors"
+            >
+              Try Again
+            </button>
+          </div>
+          <p className="text-gray-600 text-sm">
+            If the problem persists, please contact your administrator.
+          </p>
+        </div>
       </div>
     );
   }
