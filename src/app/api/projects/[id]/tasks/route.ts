@@ -168,6 +168,7 @@ export async function POST(
       assigneeName: assigneeName || undefined,
       startDate: body.startDate ? new Date(body.startDate) : undefined,
       dueDate: dueDate ? new Date(dueDate) : undefined,
+      completedAt: (body.status === 'completed') ? new Date() : undefined,
       estimatedHours: estimatedHours || undefined,
       createdBy: new mongoose.Types.ObjectId(currentUser.userId)
     };

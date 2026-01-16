@@ -118,7 +118,17 @@ export async function PUT(
     
     if (title !== undefined) updateData.title = title;
     if (description !== undefined) updateData.description = description;
-    if (status !== undefined) updateData.status = status;
+    if (status !== undefined) {
+      updateData.status = status;
+      // Auto-set completedAt when marking as completed
+      if (status === 'completed' && task.status !== 'completed') {
+        updateData.completedAt = new Date();
+      }
+      // Clear completedAt when unmarking from completed
+      if (status !== 'completed' && task.status === 'completed') {
+        updateData.completedAt = null;
+      }
+    }
     if (priority !== undefined) updateData.priority = priority;
     if (phase !== undefined) updateData.phase = phase;
     if (startDate !== undefined) updateData.startDate = startDate ? new Date(startDate) : null;

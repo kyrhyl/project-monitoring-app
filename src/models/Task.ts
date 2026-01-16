@@ -26,6 +26,7 @@ export interface ITask {
   attachments?: IAttachment[]; // File attachments
   startDate?: Date;
   dueDate?: Date;
+  completedAt?: Date; // Actual completion date
   estimatedHours?: number;
   actualHours?: number;
   createdBy: mongoose.Types.ObjectId; // Who created the task
@@ -93,6 +94,9 @@ const TaskSchema = new mongoose.Schema<ITask>({
     type: Date
   },
   dueDate: {
+    type: Date
+  },
+  completedAt: {
     type: Date
   },
   estimatedHours: {

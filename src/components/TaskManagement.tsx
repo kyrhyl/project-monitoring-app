@@ -33,9 +33,10 @@ interface TaskWithPopulatedData extends Omit<ITask, 'assigneeId' | 'createdBy'> 
 interface TaskManagementProps {
   project: IProject;
   currentUserRole: string;
+  onProjectUpdate?: () => void; // Optional callback to refresh project data
 }
 
-const TaskManagement = ({ project, currentUserRole }: TaskManagementProps) => {
+const TaskManagement = ({ project, currentUserRole, onProjectUpdate }: TaskManagementProps) => {
   const [tasks, setTasks] = useState<TaskWithPopulatedData[]>([]);
   const [projectMembers, setProjectMembers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -177,6 +178,10 @@ const TaskManagement = ({ project, currentUserRole }: TaskManagementProps) => {
 
       if (data.success) {
         await fetchTasks();
+        // Refresh parent project to update progress
+        if (onProjectUpdate) {
+          onProjectUpdate();
+        }
       } else {
         alert(data.error || 'Failed to update status');
       }
@@ -297,6 +302,21 @@ const TaskManagement = ({ project, currentUserRole }: TaskManagementProps) => {
                       {task.dueDate && (
                         <span>
                           Due: <strong>{new Date(task.dueDate).toLocaleDateString()}</strong>
+                        </span>
+                      )}
+                      {task.completedAt && task.status === 'completed' && (
+                        <span className="text-green-700 font-semibold">
+                          ✓ Completed: <strong>{new Date(task.completedAt).toLocaleDateString()}</strong>
+                          {task.dueDate && (() => {
+                            const completed = new Date(task.completedAt);
+                            const due = new Date(task.dueDate);
+                            completed.setHours(0, 0, 0, 0);
+                            due.setHours(0, 0, 0, 0);
+                            const diff = Math.ceil((due.getTime() - completed.getTime()) / (1000 * 60 * 60 * 24));
+                            if (diff > 0) return <span className="text-green-600"> ({diff} day{diff !== 1 ? 's' : ''} early)</span>;
+                            if (diff < 0) return <span className="text-red-600"> ({Math.abs(diff)} day{diff !== -1 ? 's' : ''} late)</span>;
+                            return <span className="text-blue-600"> (on time)</span>;
+                          })()}
                         </span>
                       )}
                       {task.estimatedHours && (
@@ -427,6 +447,44 @@ const TaskManagement = ({ project, currentUserRole }: TaskManagementProps) => {
                           <p className="text-gray-900 mt-1">
                             {new Date(viewingTask.dueDate).toLocaleDateString()}
                           </p>
+                        </div>
+                      )}
+
+                      {viewingTask.completedAt && viewingTask.status === 'completed' && (
+                        <div>
+                          <label className="text-sm font-medium text-gray-500">Completed Date</label>
+                          <div className="text-gray-900 mt-1">
+                            <p className="font-semibold text-green-700">
+                              ✓ {new Date(viewingTask.completedAt).toLocaleDateString()}
+                            </p>
+                            {viewingTask.dueDate && (() => {
+                              const completed = new Date(viewingTask.completedAt);
+                              const due = new Date(viewingTask.dueDate);
+                              completed.setHours(0, 0, 0, 0);
+                              due.setHours(0, 0, 0, 0);
+                              const diff = Math.ceil((due.getTime() - completed.getTime()) / (1000 * 60 * 60 * 24));
+                              
+                              if (diff > 0) {
+                                return (
+                                  <p className="text-sm text-green-600 mt-1">
+                                    🎉 Completed {diff} day{diff !== 1 ? 's' : ''} early!
+                                  </p>
+                                );
+                              } else if (diff < 0) {
+                                return (
+                                  <p className="text-sm text-red-600 mt-1">
+                                    ⚠️ Completed {Math.abs(diff)} day{diff !== -1 ? 's' : ''} late
+                                  </p>
+                                );
+                              } else {
+                                return (
+                                  <p className="text-sm text-blue-600 mt-1">
+                                    ✓ Completed on time
+                                  </p>
+                                );
+                              }
+                            })()}
+                          </div>
                         </div>
                       )}
                       

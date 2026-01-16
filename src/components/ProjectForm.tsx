@@ -14,8 +14,7 @@ const ProjectForm = ({ project, onSubmit, onCancel }: ProjectFormProps) => {
     name: project?.name || '',
     description: project?.description || '',
     status: project?.status || 'not-yet-started',
-    priority: project?.priority || 'medium',
-    progress: project?.progress || 0
+    priority: project?.priority || 'medium'
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -88,20 +87,6 @@ const ProjectForm = ({ project, onSubmit, onCancel }: ProjectFormProps) => {
                 <option value="high">High</option>
               </select>
             </div>
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Progress ({formData.progress}%)
-            </label>
-            <input
-              type="range"
-              min="0"
-              max="100"
-              value={formData.progress}
-              onChange={(e) => setFormData({ ...formData, progress: parseInt(e.target.value) })}
-              className="w-full"
-            />
           </div>
           
           <div className="flex gap-3 pt-4">

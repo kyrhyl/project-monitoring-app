@@ -10,6 +10,7 @@ import ProjectTimeline from '@/components/ProjectTimeline';
 import FileManager from '@/components/FileManager';
 import GeoPhotoGallery from '@/components/GeoPhotoGallery';
 import EditProject from '@/components/EditProject';
+import TaskPerformanceMetrics from '@/components/TaskPerformanceMetrics';
 
 interface User {
   id: string;
@@ -278,6 +279,16 @@ const ProjectDetailsPage = ({ projectId }: ProjectDetailsProps) => {
               Timeline
             </button>
             <button
+              onClick={() => setActiveTab('performance')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'performance'
+                  ? 'border-amber-900 text-amber-900'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              Performance
+            </button>
+            <button
               onClick={() => setActiveTab('calendar')}
               className={`py-4 px-1 border-b-2 font-medium text-sm ${
                 activeTab === 'calendar'
@@ -463,11 +474,19 @@ const ProjectDetailsPage = ({ projectId }: ProjectDetailsProps) => {
           <TaskManagement 
             project={project} 
             currentUserRole={currentUser.role}
+            onProjectUpdate={fetchProject}
           />
         )}
 
         {activeTab === 'timeline' && (
           <ProjectTimeline projectId={projectId} />
+        )}
+
+        {activeTab === 'performance' && (
+          <TaskPerformanceMetrics 
+            projectId={projectId} 
+            title={`Task Performance - ${project.name}`}
+          />
         )}
 
         {activeTab === 'calendar' && (

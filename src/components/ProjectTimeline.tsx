@@ -10,6 +10,7 @@ interface TaskPhase {
   status: 'todo' | 'in-progress' | 'completed';
   startDate?: Date;
   dueDate?: Date;
+  completedAt?: Date;
   estimatedHours?: number;
 }
 
@@ -55,6 +56,24 @@ const phaseLabels = {
 
 const getPhaseColor = (phase: string) => {
   return phaseColors[phase as keyof typeof phaseColors] || 'bg-gray-400';
+};
+
+// Helper function to determine completion status
+const getCompletionStatus = (task: TaskPhase): 'early' | 'on-time' | 'late' | 'none' => {
+  if (task.status !== 'completed' || !task.completedAt || !task.dueDate) {
+    return 'none';
+  }
+  
+  const completed = new Date(task.completedAt);
+  const due = new Date(task.dueDate);
+  
+  // Set both to midnight for fair comparison
+  completed.setHours(0, 0, 0, 0);
+  due.setHours(0, 0, 0, 0);
+  
+  if (completed < due) return 'early';
+  if (completed.getTime() === due.getTime()) return 'on-time';
+  return 'late';
 };
 
 export default function ProjectTimeline({ initialTeamFilter, projectId }: TimelineProps) {
@@ -389,20 +408,48 @@ export default function ProjectTimeline({ initialTeamFilter, projectId }: Timeli
                               const position = calculateBarPosition(taskStart, taskEnd);
                               if (position.width === 0) return null;
                               
+                              const completionStatus = getCompletionStatus(task);
+                              
                               return (
-                                <div
-                                  className={`absolute h-6 rounded-lg flex items-center px-2.5 text-white text-xs font-semibold shadow-lg hover:shadow-xl transition-all cursor-pointer ${getPhaseColor(task.phase)}`}
-                                  style={{
-                                    top: '3px',
-                                    left: `${position.left}%`,
-                                    width: `${position.width}%`,
-                                    minWidth: '60px'
-                                  }}
-                                  title={`${task.title} - ${phaseLabels[task.phase as keyof typeof phaseLabels] || task.phase} - ${task.status}`}
-                                >
-                                  <span className="truncate">{task.title}</span>
-                                  {task.estimatedHours && (
-                                    <span className="ml-2 text-xs opacity-90">• {task.estimatedHours}h</span>
+                                <div className="relative">
+                                  <div
+                                    className={`absolute h-6 rounded-lg flex items-center px-2.5 text-white text-xs font-semibold shadow-lg hover:shadow-xl transition-all cursor-pointer ${getPhaseColor(task.phase)}`}
+                                    style={{
+                                      top: '3px',
+                                      left: `${position.left}%`,
+                                      width: `${position.width}%`,
+                                      minWidth: '60px'
+                                    }}
+                                    title={`${task.title} - ${phaseLabels[task.phase as keyof typeof phaseLabels] || task.phase} - ${task.status}${
+                                      task.completedAt ? `\nCompleted: ${new Date(task.completedAt).toLocaleDateString()}` : ''
+                                    }${task.dueDate ? `\nDue: ${new Date(task.dueDate).toLocaleDateString()}` : ''}`}
+                                  >
+                                    <span className="truncate">{task.title}</span>
+                                    {task.estimatedHours && (
+                                      <span className="ml-2 text-xs opacity-90">• {task.estimatedHours}h</span>
+                                    )}
+                                  </div>
+                                  {/* Completion status badge */}
+                                  {completionStatus !== 'none' && (
+                                    <div
+                                      className={`absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-lg ${
+                                        completionStatus === 'early' ? 'bg-green-500' :
+                                        completionStatus === 'on-time' ? 'bg-blue-500' :
+                                        'bg-red-500'
+                                      }`}
+                                      style={{
+                                        left: `calc(${position.left + position.width}% - 10px)`,
+                                        top: '1px'
+                                      }}
+                                      title={
+                                        completionStatus === 'early' ? '✓ Completed Early' :
+                                        completionStatus === 'on-time' ? '✓ Completed On Time' :
+                                        '⚠ Completed Late'
+                                      }
+                                    >
+                                      {completionStatus === 'early' ? '✓' :
+                                       completionStatus === 'on-time' ? '✓' : '!'}
+                                    </div>
                                   )}
                                 </div>
                               );
@@ -425,39 +472,58 @@ export default function ProjectTimeline({ initialTeamFilter, projectId }: Timeli
 
       {/* Legend */}
       <div className="mt-8 p-4 bg-gray-50 rounded-lg border border-gray-200">
-        <div className="flex items-center gap-6 text-sm flex-wrap">
-          <span className="font-bold text-gray-800 text-base">LEGEND:</span>
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded bg-yellow-400 shadow"></div>
-            <span className="text-gray-700 font-medium">Architectural</span>
+        <div className="mb-4">
+          <div className="flex items-center gap-6 text-sm flex-wrap">
+            <span className="font-bold text-gray-800 text-base">PHASES:</span>
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded bg-yellow-400 shadow"></div>
+              <span className="text-gray-700 font-medium">Architectural</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded bg-teal-500 shadow"></div>
+              <span className="text-gray-700 font-medium">Structural</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded bg-orange-500 shadow"></div>
+              <span className="text-gray-700 font-medium">Electrical</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded bg-purple-500 shadow"></div>
+              <span className="text-gray-700 font-medium">Mechanical</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded bg-yellow-500 shadow"></div>
+              <span className="text-gray-700 font-medium">Final Plan</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded bg-blue-400 shadow"></div>
+              <span className="text-gray-700 font-medium">Final Estimate</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded bg-pink-400 shadow"></div>
+              <span className="text-gray-700 font-medium">Checking</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-6 h-6 rounded bg-gray-400 shadow"></div>
+              <span className="text-gray-700 font-medium">Other</span>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded bg-teal-500 shadow"></div>
-            <span className="text-gray-700 font-medium">Structural</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded bg-orange-500 shadow"></div>
-            <span className="text-gray-700 font-medium">Electrical</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded bg-purple-500 shadow"></div>
-            <span className="text-gray-700 font-medium">Mechanical</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded bg-yellow-500 shadow"></div>
-            <span className="text-gray-700 font-medium">Final Plan</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded bg-blue-400 shadow"></div>
-            <span className="text-gray-700 font-medium">Final Estimate</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded bg-pink-400 shadow"></div>
-            <span className="text-gray-700 font-medium">Checking</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded bg-gray-400 shadow"></div>
-            <span className="text-gray-700 font-medium">Other</span>
+        </div>
+        <div className="border-t border-gray-300 pt-3">
+          <div className="flex items-center gap-6 text-sm flex-wrap">
+            <span className="font-bold text-gray-800 text-base">COMPLETION STATUS:</span>
+            <div className="flex items-center gap-2">
+              <div className="w-5 h-5 rounded-full bg-green-500 shadow flex items-center justify-center text-white text-xs font-bold">✓</div>
+              <span className="text-gray-700 font-medium">Completed Early</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-5 h-5 rounded-full bg-blue-500 shadow flex items-center justify-center text-white text-xs font-bold">✓</div>
+              <span className="text-gray-700 font-medium">Completed On Time</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-5 h-5 rounded-full bg-red-500 shadow flex items-center justify-center text-white text-xs font-bold">!</div>
+              <span className="text-gray-700 font-medium">Completed Late</span>
+            </div>
           </div>
         </div>
       </div>

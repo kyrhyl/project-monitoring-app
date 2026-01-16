@@ -277,6 +277,41 @@ const EditProject = ({ project, onUpdate, onCancel }: EditProjectProps) => {
           </div>
         </div>
 
+        {/* Progress Tracking */}
+        <div>
+          <h3 className="text-lg font-medium text-gray-900 mb-4">Progress Tracking</h3>
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <p className="text-sm font-medium text-blue-900">Current Progress</p>
+                <p className="text-xs text-blue-700 mt-1">
+                  📊 Auto-calculated from task completion
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-3xl font-bold text-blue-900">{formData.progress}%</p>
+                <p className="text-xs text-blue-600 mt-1">
+                  {formData.progress === 100 ? '✓ Complete' : 
+                   formData.progress >= 75 ? '🎯 Almost there' :
+                   formData.progress >= 50 ? '📈 Good progress' :
+                   formData.progress >= 25 ? '🚀 Getting started' :
+                   '📝 Just started'}
+                </p>
+              </div>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+              <div
+                className="h-full rounded-full transition-all duration-500 bg-gradient-to-r from-blue-500 to-blue-600"
+                style={{ width: `${formData.progress}%` }}
+              />
+            </div>
+            <p className="text-xs text-blue-700 mt-3">
+              💡 <strong>How it's calculated:</strong> Based on completed tasks vs. total tasks 
+              ({formData.progress === 0 ? 'No tasks yet' : `Completed / Total`})
+            </p>
+          </div>
+        </div>
+
         {/* Contract Information */}
         <div>
           <h3 className="text-lg font-medium text-gray-900 mb-4">Contract Information</h3>
