@@ -161,7 +161,7 @@ export async function PUT(
       .lean();
 
     // Update project dates based on all tasks
-    if (updatedTask) {
+    if (updatedTask && 'projectId' in updatedTask && updatedTask.projectId) {
       // Extract the _id from the populated projectId
       const projectIdStr = typeof updatedTask.projectId === 'object' 
         ? (updatedTask.projectId as any)._id.toString() 
