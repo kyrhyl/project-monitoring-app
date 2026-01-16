@@ -85,7 +85,7 @@ const Calendar = () => {
       
       // Validate response data
       if (!data || (!data.projects && !data.tasks)) {
-        logger.warn('Invalid calendar data structure', { context: 'Calendar', data });
+        logger.warn('Invalid calendar data structure', { context: 'Calendar' });
         // Don't throw error, just use empty arrays
         setCalendarData([]);
         return;
@@ -121,9 +121,12 @@ const Calendar = () => {
               });
             }
           } catch (err) {
-            logger.warn('Error processing project for calendar', err, { 
+            logger.warn('Error processing project for calendar', { 
               context: 'Calendar', 
-              projectId: project._id 
+              metadata: {
+                projectId: project._id,
+                error: err
+              }
             });
           }
         });
@@ -146,9 +149,12 @@ const Calendar = () => {
               });
             }
           } catch (err) {
-            logger.warn('Error processing task for calendar', err, { 
+            logger.warn('Error processing task for calendar', { 
               context: 'Calendar', 
-              taskId: task._id 
+              metadata: {
+                taskId: task._id,
+                error: err
+              }
             });
           }
         });

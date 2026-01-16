@@ -28,6 +28,7 @@ interface ProjectTimelineData {
 interface TimelineProps {
   initialTeamFilter?: string;
   projectId?: string; // Optional: if provided, show only this project
+  compact?: boolean; // Optional: compact view mode
 }
 
 type ViewMode = 'project' | 'member';
