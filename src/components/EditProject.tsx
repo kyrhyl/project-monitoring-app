@@ -22,7 +22,8 @@ const EditProject = ({ project, onUpdate, onCancel }: EditProjectProps) => {
     location: project.location || '',
     approvedBudgetContract: project.approvedBudgetContract || '',
     contractDuration: project.contractDuration || '',
-    fundingSource: project.fundingSource || ''
+    fundingSource: project.fundingSource || '',
+    remarks: project.remarks || ''
   });
 
   const [loading, setLoading] = useState(false);
@@ -74,7 +75,8 @@ const EditProject = ({ project, onUpdate, onCancel }: EditProjectProps) => {
         location: formData.location,
         approvedBudgetContract: formData.approvedBudgetContract,
         contractDuration: formData.contractDuration,
-        fundingSource: formData.fundingSource
+        fundingSource: formData.fundingSource,
+        remarks: formData.remarks
       };
 
       const response = await fetch(`/api/projects/${project._id}`, {
@@ -441,6 +443,26 @@ const EditProject = ({ project, onUpdate, onCancel }: EditProjectProps) => {
               />
             </div>
           </div>
+        </div>
+
+        {/* Remarks */}
+        <div>
+          <h3 className="text-lg font-medium text-gray-900 mb-4">Remarks</h3>
+          <label htmlFor="remarks" className="block text-sm font-medium text-gray-700 mb-2">
+            Project Remarks
+            <span className="text-xs text-gray-500 font-normal ml-2">(e.g., reason for delays, issues, updates)</span>
+          </label>
+          <textarea
+            id="remarks"
+            name="remarks"
+            value={formData.remarks}
+            onChange={handleInputChange}
+            rows={4}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+            maxLength={1000}
+            placeholder="Enter any remarks about project delays, issues, or important updates..."
+          />
+          <p className="mt-1 text-sm text-gray-500">{formData.remarks.length}/1000 characters</p>
         </div>
       </form>
     </div>

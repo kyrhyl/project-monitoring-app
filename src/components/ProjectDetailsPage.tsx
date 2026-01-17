@@ -448,6 +448,33 @@ const ProjectDetailsPage = ({ projectId }: ProjectDetailsProps) => {
               )}
             </div>
 
+            {/* Project Remarks */}
+            <div className={`rounded-xl shadow-sm border p-6 ${
+              project.remarks 
+                ? 'bg-amber-50 border-amber-200' 
+                : 'bg-gray-50 border-gray-200'
+            }`}>
+              <div className="flex items-start">
+                <svg className={`w-5 h-5 mt-0.5 mr-3 flex-shrink-0 ${
+                  project.remarks ? 'text-amber-600' : 'text-gray-400'
+                }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                </svg>
+                <div className="flex-1">
+                  <h3 className={`text-lg font-medium mb-2 ${
+                    project.remarks ? 'text-amber-900' : 'text-gray-700'
+                  }`}>Project Remarks</h3>
+                  {project.remarks ? (
+                    <p className="text-amber-800 leading-relaxed whitespace-pre-line">{project.remarks}</p>
+                  ) : (
+                    <p className="text-gray-500 italic text-sm">
+                      No remarks added yet. Click "Edit Project" to add remarks about delays, issues, or updates.
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+
             {/* Project Photo Gallery */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <h3 className="text-lg font-medium text-gray-900 mb-4">Project Photos</h3>

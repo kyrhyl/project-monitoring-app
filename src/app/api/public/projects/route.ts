@@ -17,6 +17,13 @@ interface PublicProject {
   location?: string;
   approvedBudgetContract?: number;
   contractDuration?: string;
+  remarks?: string;
+  teamMembers?: Array<{
+    _id: string;
+    firstName?: string;
+    lastName?: string;
+    username: string;
+  }>;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -69,7 +76,8 @@ export async function GET(request: NextRequest) {
     
     // Fetch projects with sanitized fields only
     const projects = await Project.find(query)
-      .select('name description status priority startDate endDate progress contractId appropriation location approvedBudgetContract contractDuration createdAt updatedAt')
+      .select('name description status priority startDate endDate progress contractId appropriation location approvedBudgetContract contractDuration remarks teamMembers createdAt updatedAt')
+      .populate('teamMembers', 'firstName lastName username')
       .sort(sortObject)
       .skip(skip)
       .limit(limit)
@@ -93,6 +101,8 @@ export async function GET(request: NextRequest) {
       location: project.location ? project.location.split(',')[0] : undefined, // Only show general location
       approvedBudgetContract: project.approvedBudgetContract,
       contractDuration: project.contractDuration,
+      remarks: project.remarks,
+      teamMembers: project.teamMembers,
       createdAt: project.createdAt,
       updatedAt: project.updatedAt
     }));

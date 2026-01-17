@@ -29,7 +29,8 @@ export async function GET(request: NextRequest) {
     // Admins can see all projects (no filter)
 
     const projects = await Project.find(filter)
-      .select('name description status priority startDate endDate progress teamId createdBy')
+      .select('name description status priority startDate endDate progress teamId createdBy teamMembers remarks')
+      .populate('teamMembers', 'firstName lastName username')
       .sort({ createdAt: -1 })
       .lean();
 

@@ -59,6 +59,7 @@ export interface IProject {
   approvedBudgetContract?: number; // ABC in currency
   contractDuration?: string; // e.g., "12 months", "2 years"
   fundingSource?: string; // e.g., "National Government Budget", "Foreign Aid", "Private Partnership"
+  remarks?: string; // Remarks about project delays, issues, or updates
   teamId?: mongoose.Types.ObjectId;
   teamMembers?: mongoose.Types.ObjectId[]; // Specific team members assigned to this project
   attachments?: IAttachment[]; // File attachments
@@ -178,6 +179,11 @@ const ProjectSchema = new mongoose.Schema<IProject>({
     type: String,
     trim: true,
     maxLength: [150, 'Funding source cannot exceed 150 characters']
+  },
+  remarks: {
+    type: String,
+    trim: true,
+    maxLength: [1000, 'Remarks cannot exceed 1000 characters']
   },
   teamId: {
     type: mongoose.Schema.Types.ObjectId
