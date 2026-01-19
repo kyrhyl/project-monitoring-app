@@ -6,7 +6,7 @@ import { ChevronDown } from 'lucide-react';
 interface TaskPhase {
   _id: string;
   title: string;
-  phase: 'architectural' | 'structural' | 'electrical' | 'mechanical' | 'final-plan' | 'final-estimate' | 'checking' | 'other';
+  phase: 'architectural' | 'structural' | 'electrical' | 'mechanical' | 'site-development' | 'final-plan' | 'final-estimate' | 'checking' | 'other';
   status: 'todo' | 'in-progress' | 'completed';
   startDate?: Date;
   dueDate?: Date;
@@ -69,6 +69,7 @@ const phaseColors = {
   'structural': 'bg-teal-500',
   'electrical': 'bg-orange-500',
   'mechanical': 'bg-purple-500',
+  'site-development': 'bg-green-500',
   'final-plan': 'bg-yellow-500',
   'final-estimate': 'bg-blue-400',
   'checking': 'bg-pink-400',
@@ -83,6 +84,7 @@ const phaseLabels = {
   'structural': 'Structural',
   'electrical': 'Electrical',
   'mechanical': 'Mechanical',
+  'site-development': 'Site Development',
   'final-plan': 'Final Plan',
   'final-estimate': 'Final Estimate',
   'checking': 'Checking',
@@ -901,19 +903,42 @@ export default function ProjectTimeline({ initialTeamFilter, projectId, isPublic
               projects
                 .slice()
                 .sort((a, b) => {
-                  // Sort by start date (earliest first)
-                  if (!a.startDate && !b.startDate) return 0;
-                  if (!a.startDate) return 1; // Projects without dates go to end
-                  if (!b.startDate) return -1;
-                  return new Date(a.startDate).getTime() - new Date(b.startDate).getTime();
+                  // Sort by project name (alphabetically)
+                  return a.name.localeCompare(b.name);
                 })
                 .map((project, idx) => {
                 const isExpanded = expandedProjects.has(project._id);
-                const projectDuration = project.startDate && project.endDate 
-                  ? `${new Date(project.startDate).toLocaleDateString()} - ${new Date(project.endDate).toLocaleDateString()}`
+                
+                // Calculate actual project dates from tasks
+                const tasksWithAnyDates = project.tasks.filter(t => t.startDate || t.dueDate);
+                let actualStartDate: Date | undefined = undefined;
+                let actualEndDate: Date | undefined = undefined;
+                let isCalculatedFromTasks = false;
+                
+                if (tasksWithAnyDates.length > 0) {
+                  const allDates: number[] = [];
+                  tasksWithAnyDates.forEach(t => {
+                    if (t.startDate) allDates.push(new Date(t.startDate).getTime());
+                    if (t.dueDate) allDates.push(new Date(t.dueDate).getTime());
+                  });
+                  if (allDates.length > 0) {
+                    actualStartDate = new Date(Math.min(...allDates));
+                    actualEndDate = new Date(Math.max(...allDates));
+                    isCalculatedFromTasks = true;
+                  }
+                }
+                
+                // Only fall back to project dates if no task dates exist
+                if (!isCalculatedFromTasks) {
+                  actualStartDate = project.startDate;
+                  actualEndDate = project.endDate;
+                }
+                
+                const projectDuration = actualStartDate && actualEndDate 
+                  ? `${new Date(actualStartDate).toLocaleDateString()} - ${new Date(actualEndDate).toLocaleDateString()}`
                   : 'No dates set';
-                const durationDays = project.startDate && project.endDate
-                  ? Math.ceil((new Date(project.endDate).getTime() - new Date(project.startDate).getTime()) / (1000 * 60 * 60 * 24))
+                const durationDays = actualStartDate && actualEndDate
+                  ? Math.ceil((new Date(actualEndDate).getTime() - new Date(actualStartDate).getTime()) / (1000 * 60 * 60 * 24))
                   : 0;
 
                 return (
@@ -924,7 +949,7 @@ export default function ProjectTimeline({ initialTeamFilter, projectId, isPublic
                         className="flex bg-gradient-to-r from-gray-50 to-gray-100 hover:from-blue-50 hover:to-blue-100 cursor-pointer transition-all duration-200 border-b border-gray-200 group"
                         onClick={() => toggleProject(project._id)}
                       >
-                        <div className="w-80 flex-shrink-0 py-2 px-3 flex items-center gap-2 sticky left-0 z-10 bg-gradient-to-r from-gray-50 to-gray-100 group-hover:from-blue-50 group-hover:to-blue-100 transition-all duration-200">
+                        <div className="w-64 flex-shrink-0 py-2 px-3 flex items-center gap-2 sticky left-0 z-10 bg-gradient-to-r from-gray-50 to-gray-100 group-hover:from-blue-50 group-hover:to-blue-100 transition-all duration-200">
                           {/* Expand/Collapse Icon with animation */}
                           <div className={`transition-all duration-300 ease-in-out transform ${isExpanded ? 'rotate-90 text-blue-600' : 'text-gray-500 group-hover:text-blue-600'}`}>
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -941,13 +966,13 @@ export default function ProjectTimeline({ initialTeamFilter, projectId, isPublic
                           </div>
                         </div>
                         <div className="flex-1 relative py-2">
-                          {/* Project duration bar */}
-                          {project.startDate && project.endDate && (
+                          {/* Project duration bar - based on actual task dates */}
+                          {actualStartDate && actualEndDate && (
                             <div
                               className="absolute top-2 h-5 rounded flex items-center justify-center text-white text-[10px] font-bold shadow hover:shadow-md transition-shadow"
                               style={{
-                                left: `${calculateBarPosition(project.startDate, project.endDate).left}%`,
-                                width: `${calculateBarPosition(project.startDate, project.endDate).width}%`,
+                                left: `${calculateBarPosition(actualStartDate, actualEndDate).left}%`,
+                                width: `${calculateBarPosition(actualStartDate, actualEndDate).width}%`,
                                 backgroundColor: project.status === 'completed' ? '#10b981' : 
                                                project.status === 'on-going' ? '#3b82f6' : 
                                                project.status === 'submitted' ? '#f59e0b' : '#6b7280',

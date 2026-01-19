@@ -19,7 +19,7 @@ export interface ITask {
   description: string;
   status: 'todo' | 'in-progress' | 'completed';
   priority: 'low' | 'medium' | 'high';
-  phase: 'architectural' | 'structural' | 'electrical' | 'mechanical' | 'final-plan' | 'final-estimate' | 'checking' | 'other';
+  phase: 'architectural' | 'structural' | 'electrical' | 'mechanical' | 'site-development' | 'final-plan' | 'final-estimate' | 'checking' | 'other';
   projectId: mongoose.Types.ObjectId;
   assigneeId?: mongoose.Types.ObjectId; // User ObjectId instead of string
   assigneeName?: string; // Keep for backward compatibility and display
@@ -72,7 +72,7 @@ const TaskSchema = new mongoose.Schema<ITask>({
   },
   phase: {
     type: String,
-    enum: ['architectural', 'structural', 'electrical', 'mechanical', 'final-plan', 'final-estimate', 'checking', 'other'],
+    enum: ['architectural', 'structural', 'electrical', 'mechanical', 'site-development', 'final-plan', 'final-estimate', 'checking', 'other'],
     required: true
   },
   projectId: {

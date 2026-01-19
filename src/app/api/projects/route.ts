@@ -16,17 +16,26 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    let filter = {};
+    let filter: any = {};
+    
+    // Check if teamId is specified in query params
+    const { searchParams } = new URL(request.url);
+    const teamId = searchParams.get('teamId');
     
     // Filter projects based on user role
     if (currentUser.role === 'member') {
       // Members can only see projects from their team
       filter = { teamId: currentUser.teamId };
     } else if (currentUser.role === 'team_leader') {
-      // Team leaders can see projects from their team
+      // Team leaders can see projects from their team, unless admin is querying specific team
       filter = { teamId: currentUser.teamId };
+    } else if (currentUser.role === 'admin') {
+      // Admins can filter by team if specified
+      if (teamId && teamId !== 'all') {
+        filter = { teamId };
+      }
+      // Otherwise show all projects (no filter)
     }
-    // Admins can see all projects (no filter)
 
     const projects = await Project.find(filter)
       .select('name description status priority startDate endDate progress teamId createdBy teamMembers remarks')

@@ -6,7 +6,7 @@ import { X, Calendar, User, Clock } from 'lucide-react';
 interface TaskFormData {
   title: string;
   description: string;
-  phase: 'architectural' | 'structural' | 'electrical' | 'mechanical' | 'final-plan' | 'final-estimate' | 'checking' | 'other';
+  phase: 'architectural' | 'structural' | 'electrical' | 'mechanical' | 'site-development' | 'final-plan' | 'final-estimate' | 'checking' | 'other';
   status: 'todo' | 'in-progress' | 'completed';
   priority: 'low' | 'medium' | 'high';
   startDate: string;
@@ -51,6 +51,13 @@ const TASK_TEMPLATES = {
     'Fire Protection System',
     'Sanitary System',
   ],
+  'site-development': [
+    'Site Grading',
+    'Excavation Work',
+    'Foundation Preparation',
+    'Utilities Installation',
+    'Road and Pathway Construction',
+  ],
   'final-plan': [
     'Final Architectural Plans',
     'Final Structural Plans',
@@ -79,6 +86,7 @@ const PHASE_COLORS = {
   structural: 'bg-teal-100 border-teal-400 text-teal-800',
   electrical: 'bg-orange-100 border-orange-400 text-orange-800',
   mechanical: 'bg-purple-100 border-purple-400 text-purple-800',
+  'site-development': 'bg-green-100 border-green-400 text-green-800',
   'final-plan': 'bg-yellow-100 border-yellow-500 text-yellow-800',
   'final-estimate': 'bg-blue-100 border-blue-400 text-blue-800',
   checking: 'bg-pink-100 border-pink-400 text-pink-800',
@@ -268,6 +276,7 @@ export default function EnhancedTaskForm({ projectId, onClose, onSubmit, editTas
                 <option value="structural">Structural</option>
                 <option value="electrical">Electrical</option>
                 <option value="mechanical">Mechanical</option>
+                <option value="site-development">Site Development</option>
                 <option value="final-plan">Final Plan</option>
                 <option value="final-estimate">Final Estimate</option>
                 <option value="checking">Checking</option>
