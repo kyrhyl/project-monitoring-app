@@ -317,25 +317,48 @@ export default function ProjectTimeline({ initialTeamFilter, projectId, isPublic
   useEffect(() => {
     const topScroll = document.getElementById('top-scroll');
     const mainScroll = document.getElementById('main-scroll');
+    const topScrollMember = document.getElementById('top-scroll-member');
+    const mainScrollMember = document.getElementById('main-scroll-member');
     
-    if (!topScroll || !mainScroll) return;
+    // Sync for project view
+    if (topScroll && mainScroll) {
+      const syncTopToMain = () => {
+        if (mainScroll) mainScroll.scrollLeft = topScroll.scrollLeft;
+      };
 
-    const syncTopToMain = () => {
-      if (mainScroll) mainScroll.scrollLeft = topScroll.scrollLeft;
-    };
+      const syncMainToTop = () => {
+        if (topScroll) topScroll.scrollLeft = mainScroll.scrollLeft;
+      };
 
-    const syncMainToTop = () => {
-      if (topScroll) topScroll.scrollLeft = mainScroll.scrollLeft;
-    };
+      topScroll.addEventListener('scroll', syncTopToMain);
+      mainScroll.addEventListener('scroll', syncMainToTop);
+    }
+    
+    // Sync for member view
+    if (topScrollMember && mainScrollMember) {
+      const syncTopToMainMember = () => {
+        if (mainScrollMember) mainScrollMember.scrollLeft = topScrollMember.scrollLeft;
+      };
 
-    topScroll.addEventListener('scroll', syncTopToMain);
-    mainScroll.addEventListener('scroll', syncMainToTop);
+      const syncMainToTopMember = () => {
+        if (topScrollMember) topScrollMember.scrollLeft = mainScrollMember.scrollLeft;
+      };
+
+      topScrollMember.addEventListener('scroll', syncTopToMainMember);
+      mainScrollMember.addEventListener('scroll', syncMainToTopMember);
+    }
 
     return () => {
-      if (topScroll) topScroll.removeEventListener('scroll', syncTopToMain);
-      if (mainScroll) mainScroll.removeEventListener('scroll', syncMainToTop);
+      if (topScroll && mainScroll) {
+        topScroll.removeEventListener('scroll', () => {});
+        mainScroll.removeEventListener('scroll', () => {});
+      }
+      if (topScrollMember && mainScrollMember) {
+        topScrollMember.removeEventListener('scroll', () => {});
+        mainScrollMember.removeEventListener('scroll', () => {});
+      }
     };
-  }, []);
+  }, [viewMode]);
 
   const fetchTeams = async () => {
     try {
@@ -847,11 +870,8 @@ export default function ProjectTimeline({ initialTeamFilter, projectId, isPublic
         </div>
       )}
 
-      {loading ? (
-        <div className="flex justify-center items-center py-20 flex-1">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        </div>
-      ) : (
+      {/* Project View */}
+      {!loading && viewMode === 'project' && (
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Top Scrollbar Mirror */}
           <div className="overflow-x-auto overflow-y-hidden border-b border-gray-300 bg-gray-50" id="top-scroll">
@@ -898,7 +918,7 @@ export default function ProjectTimeline({ initialTeamFilter, projectId, isPublic
                 <p className="text-gray-500 text-lg mb-2">No projects found.</p>
                 <p className="text-sm text-gray-400">Create your first project to get started!</p>
               </div>
-            ) : viewMode === 'project' && (
+            ) : (
               /* PROJECT VIEW */
               projects
                 .slice()
@@ -1098,110 +1118,135 @@ export default function ProjectTimeline({ initialTeamFilter, projectId, isPublic
         </div>
       )}
 
-      {/* Member View */}
-      {viewMode === 'member' && (
-        <div className="overflow-x-auto">
-          <div className="min-w-[800px]">
-            {groupTasksByMember(projects).map((workload) => {
-              const memberConflicts = workload.tasks.filter(task => conflicts.has(task._id));
-              
-              return (
-                <div key={workload.memberId} className="mb-8 border-2 border-gray-300 rounded-lg overflow-hidden">
-                  {/* Member Header */}
-                  <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-4 flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
-                        <span className="text-2xl font-bold">
-                          {workload.memberName.split(' ').map(n => n[0]).join('')}
-                        </span>
-                      </div>
-                      <div>
-                        <h3 className="text-xl font-bold">{workload.memberName}</h3>
-                        <p className="text-sm text-indigo-100">
-                          {workload.tasks.length} task{workload.tasks.length !== 1 ? 's' : ''} across {workload.projects.size} project{workload.projects.size !== 1 ? 's' : ''}
-                        </p>
-                      </div>
-                    </div>
-                    {memberConflicts.length > 0 && (
-                      <div className="bg-red-500 text-white px-4 py-2 rounded-full font-bold flex items-center gap-2">
-                        <span className="text-2xl">⚠️</span>
-                        <span>{memberConflicts.length} Conflict{memberConflicts.length !== 1 ? 's' : ''}</span>
-                      </div>
-                    )}
-                  </div>
+      {/* Loading State */}
+      {loading && (
+        <div className="flex justify-center items-center py-20 flex-1">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>
+      )}
 
-                  {/* Conflict Warnings */}
-                  {memberConflicts.length > 0 && (
-                    <div className="bg-red-50 border-b-2 border-red-200 p-4">
-                      <div className="flex items-start gap-3">
-                        <span className="text-3xl">⚠️</span>
-                        <div className="flex-1">
-                          <h4 className="font-bold text-red-800 text-lg mb-2">Schedule Conflicts Detected</h4>
-                          {memberConflicts.map((task, idx) => {
-                            const conflict = conflicts.get(task._id);
-                            if (!conflict) return null;
-                            
-                            return (
-                              <div key={idx} className="mb-3 p-3 bg-white border border-red-300 rounded-lg">
-                                <p className="font-semibold text-red-900 mb-2">
-                                  📅 Task: {task.title}
-                                </p>
-                                <div className="space-y-1 text-sm">
-                                  <div className="flex items-center gap-2">
-                                    <span className="w-2 h-2 bg-red-500 rounded-full"></span>
-                                    <span className="font-medium">{new Date(task.startDate!).toLocaleDateString()} - {new Date(task.dueDate!).toLocaleDateString()}</span>
-                                  </div>
-                                  <div className="text-gray-600">
-                                    Conflicts with {conflict.conflictingWith.length} other task(s)
-                                  </div>
-                                </div>
-                              </div>
-                            );
-                          })}
+      {/* Member View */}
+      {!loading && viewMode === 'member' && (
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Top Scrollbar Mirror */}
+          <div className="overflow-x-auto overflow-y-hidden border-b border-gray-300 bg-gray-50" id="top-scroll-member">
+            <div className="min-w-[1200px] h-3"></div>
+          </div>
+          
+          <div className="flex-1 overflow-auto" id="main-scroll-member">
+            <div className="min-w-[1200px]">
+              {groupTasksByMember(projects).map((workload) => {
+                const memberConflicts = workload.tasks.filter(task => conflicts.has(task._id));
+                
+                return (
+                  <div key={workload.memberId} className="mb-8 border-2 border-gray-300 rounded-lg overflow-hidden">
+                    {/* Member Header */}
+                    <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-4 flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+                          <span className="text-2xl font-bold">
+                            {workload.memberName.split(' ').map(n => n[0]).join('')}
+                          </span>
+                        </div>
+                        <div>
+                          <h3 className="text-xl font-bold">{workload.memberName}</h3>
+                          <p className="text-sm text-indigo-100">
+                            {workload.tasks.length} task{workload.tasks.length !== 1 ? 's' : ''} across {workload.projects.size} project{workload.projects.size !== 1 ? 's' : ''}
+                          </p>
                         </div>
                       </div>
-                    </div>
-                  )}
-
-                  {/* Timeline */}
-                  <div className="p-6 bg-white">
-                    {/* Date Headers */}
-                    <div className="flex mb-2">
-                      <div className="w-48 flex-shrink-0"></div>
-                      <div className="flex-1 flex border-b border-gray-200">
-                        {dateHeaders.map((date, index) => {
-                          const { day, month } = formatDateHeader(date);
-                          return (
-                            <div
-                              key={index}
-                              className="flex-1 text-center text-xs font-semibold text-gray-600 pb-2"
-                              style={{ minWidth: '40px' }}
-                            >
-                              {day}
-                            </div>
-                          );
-                        })}
-                      </div>
+                      {memberConflicts.length > 0 && (
+                        <div className="bg-red-500 text-white px-4 py-2 rounded-full font-bold flex items-center gap-2">
+                          <span className="text-2xl">⚠️</span>
+                          <span>{memberConflicts.length} Conflict{memberConflicts.length !== 1 ? 's' : ''}</span>
+                        </div>
+                      )}
                     </div>
 
-                    {/* Group tasks by project */}
-                    {Array.from(workload.projects).map(projectName => {
-                      const projectTasks = workload.tasks.filter((t: any) => t.projectName === projectName);
-                      const hasConflict = projectTasks.some(task => conflicts.has(task._id));
-
-                      return (
-                        <div key={projectName} className="mb-4">
-                          <div className="flex items-center gap-2 mb-2 px-2">
-                            <div className="w-3 h-3 bg-gradient-to-r from-blue-500 to-purple-500 rounded"></div>
-                            <span className="font-semibold text-gray-700">{projectName}</span>
-                            {hasConflict && (
-                              <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full font-medium">
-                                Has Conflicts
-                              </span>
-                            )}
+                    {/* Conflict Warnings */}
+                    {memberConflicts.length > 0 && (
+                      <div className="bg-red-50 border-b-2 border-red-200 p-4">
+                        <div className="flex items-start gap-3">
+                          <span className="text-3xl">⚠️</span>
+                          <div className="flex-1">
+                            <h4 className="font-bold text-red-800 text-lg mb-2">Schedule Conflicts Detected</h4>
+                            {memberConflicts.map((task, idx) => {
+                              const conflict = conflicts.get(task._id);
+                              if (!conflict) return null;
+                              
+                              return (
+                                <div key={idx} className="mb-3 p-3 bg-white border border-red-300 rounded-lg">
+                                  <p className="font-semibold text-red-900 mb-2">
+                                    📅 Task: {task.title}
+                                  </p>
+                                  <div className="space-y-1 text-sm">
+                                    <div className="flex items-center gap-2">
+                                      <span className="w-2 h-2 bg-red-500 rounded-full"></span>
+                                      <span className="font-medium">{new Date(task.startDate!).toLocaleDateString()} - {new Date(task.dueDate!).toLocaleDateString()}</span>
+                                    </div>
+                                    <div className="text-gray-600">
+                                      Conflicts with {conflict.conflictingWith.length} other task(s)
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            })}
                           </div>
+                        </div>
+                      </div>
+                    )}
 
-                          {projectTasks.map((task: any, taskIdx: number) => {
+                    {/* Timeline with Date Headers and Task Rows */}
+                    <div className="bg-white">
+                      {/* Date Headers with Month Grouping - Sticky */}
+                      <div className="flex border-b-2 border-gray-300 sticky top-0 z-30 bg-white">
+                        <div className="w-48 flex-shrink-0 bg-gray-100"></div>
+                        <div className="flex-1 flex">
+                          {Object.entries(groupedHeaders).map(([monthYear, dates]) => (
+                            <div key={monthYear} style={{ width: `${(dates.length / dateHeaders.length) * 100}%` }} className="border-l border-gray-300">
+                              <div className="text-center font-bold text-gray-800 py-2 border-b border-gray-300 bg-gray-100 text-xs">
+                                {monthYear}
+                              </div>
+                              <div className="flex">
+                                {dates.map((date, idx) => {
+                                  const { day } = formatDateHeader(date);
+                                  const isToday = new Date().toDateString() === date.toDateString();
+                                  return (
+                                    <div
+                                      key={idx}
+                                      className={`flex-1 text-center text-xs font-medium py-2 border-l border-gray-200 ${
+                                        isToday ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
+                                      }`}
+                                    >
+                                      {day}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Task Rows by Project */}
+                      <div className="p-6 pt-4">
+                      {Array.from(workload.projects).map(projectName => {
+                        const projectTasks = workload.tasks.filter((t: any) => t.projectName === projectName);
+                        const hasConflict = projectTasks.some(task => conflicts.has(task._id));
+
+                        return (
+                          <div key={projectName} className="mb-4">
+                            <div className="flex items-center gap-2 mb-2 px-2">
+                              <div className="w-3 h-3 bg-gradient-to-r from-blue-500 to-purple-500 rounded"></div>
+                              <span className="font-semibold text-gray-700">{projectName}</span>
+                              {hasConflict && (
+                                <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full font-medium">
+                                  Has Conflicts
+                                </span>
+                              )}
+                            </div>
+
+                            {projectTasks.map((task: any, taskIdx: number) => {
                             const isConflicting = conflicts.has(task._id);
 
                             return (
@@ -1315,8 +1360,9 @@ export default function ProjectTimeline({ initialTeamFilter, projectId, isPublic
                         </div>
                       );
                     })}
+                    </div>
+                    </div>
                   </div>
-                </div>
               );
             })}
 
@@ -1328,6 +1374,7 @@ export default function ProjectTimeline({ initialTeamFilter, projectId, isPublic
               </div>
             )}
           </div>
+        </div>
         </div>
       )}
 
