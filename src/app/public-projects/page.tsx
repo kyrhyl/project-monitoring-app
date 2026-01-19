@@ -198,7 +198,7 @@ export default function PublicProjectsPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100">
       {/* Compact Header */}
-      <div className="bg-white shadow-sm border-b border-gray-200">
+      <div className="bg-white shadow-sm border-b border-gray-200 no-print">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div>
@@ -211,7 +211,7 @@ export default function PublicProjectsPage() {
             </div>
             
             {/* Navigation Tabs - Inline */}
-            <nav className="flex gap-3">
+            <nav className="flex gap-3 no-print">
               <button
                 onClick={() => setViewMode('overview')}
                 className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${
@@ -244,7 +244,7 @@ export default function PublicProjectsPage() {
               </button>
             </nav>
             
-            <div className="lg:ml-auto flex items-center gap-3">
+            <div className="lg:ml-auto flex items-center gap-3 no-print">
               <button
                 onClick={() => router.push('/public-projects/report')}
                 className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-medium px-6 py-2.5 rounded-lg transition-all transform hover:scale-105 shadow-md flex items-center gap-2"

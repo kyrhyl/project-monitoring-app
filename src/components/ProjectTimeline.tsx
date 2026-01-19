@@ -302,6 +302,7 @@ export default function ProjectTimeline({ initialTeamFilter, projectId, isPublic
   const [conflicts, setConflicts] = useState<Map<string, TaskConflict>>(new Map());
   const [showPlanningPanel, setShowPlanningPanel] = useState(false);
   const [expandedProjects, setExpandedProjects] = useState<Set<string>>(new Set());
+  const [selectedMembers, setSelectedMembers] = useState<Set<string>>(new Set());
 
   const toggleProject = (projectId: string) => {
     const newExpanded = new Set(expandedProjects);
@@ -359,6 +360,24 @@ export default function ProjectTimeline({ initialTeamFilter, projectId, isPublic
       }
     };
   }, [viewMode]);
+
+  // Close member filter dropdown on click outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const dropdown = document.getElementById('member-filter-dropdown');
+      const button = event.target as HTMLElement;
+      
+      if (dropdown && !dropdown.classList.contains('hidden')) {
+        const isClickInside = dropdown.contains(button) || button.closest('button')?.textContent?.includes('Member');
+        if (!isClickInside) {
+          dropdown.classList.add('hidden');
+        }
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, []);
 
   const fetchTeams = async () => {
     try {
@@ -592,7 +611,7 @@ export default function ProjectTimeline({ initialTeamFilter, projectId, isPublic
   return (
     <div className="bg-white rounded-lg shadow-lg p-4 h-full flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between mb-4 flex-shrink-0">
+      <div className="flex items-center justify-between mb-4 flex-shrink-0 no-print">
         <div>
           <h1 className="text-xl font-bold text-gray-800">
             {projectId ? 'Task Timeline' : 'Project Timeline'}
@@ -602,7 +621,7 @@ export default function ProjectTimeline({ initialTeamFilter, projectId, isPublic
           </p>
         </div>
         
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 no-print">
           {/* View Mode Toggle */}
           {!projectId && (
             <div className="bg-gray-100 rounded-lg p-1 flex items-center gap-1">
@@ -626,6 +645,91 @@ export default function ProjectTimeline({ initialTeamFilter, projectId, isPublic
               >
                 👥 By Member
               </button>
+            </div>
+          )}
+
+          {/* Member Filter - Only show in member view */}
+          {!projectId && viewMode === 'member' && memberWorkloads.length > 0 && (
+            <div className="relative">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  const dropdown = document.getElementById('member-filter-dropdown');
+                  if (dropdown) {
+                    dropdown.classList.toggle('hidden');
+                  }
+                }}
+                className="bg-white border border-gray-300 rounded-lg px-4 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm flex items-center gap-2 hover:bg-gray-50"
+              >
+                <span>👥</span>
+                <span>
+                  {selectedMembers.size === 0 
+                    ? 'All Members' 
+                    : `${selectedMembers.size} Member${selectedMembers.size !== 1 ? 's' : ''}`}
+                </span>
+                <ChevronDown className="w-4 h-4 text-gray-500 ml-2" />
+              </button>
+              
+              {/* Dropdown */}
+              <div
+                id="member-filter-dropdown"
+                className="hidden absolute top-full mt-2 right-0 bg-white border border-gray-300 rounded-lg shadow-lg z-50 min-w-[250px] max-h-96 overflow-y-auto"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="p-2 border-b border-gray-200 bg-gray-50 sticky top-0 z-10 flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const allMemberIds = new Set(memberWorkloads.map(w => w.memberId));
+                      setSelectedMembers(allMemberIds);
+                    }}
+                    className="text-xs text-blue-600 hover:text-blue-800 font-medium flex-1 text-left"
+                  >
+                    Select All
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedMembers(new Set())}
+                    className="text-xs text-red-600 hover:text-red-800 font-medium flex-1 text-right"
+                  >
+                    Deselect All
+                  </button>
+                </div>
+                <div className="p-2">
+                  {memberWorkloads.map(workload => (
+                    <label
+                      key={workload.memberId}
+                      className="flex items-center gap-2 p-2 hover:bg-gray-50 rounded cursor-pointer"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedMembers.size > 0 && selectedMembers.has(workload.memberId)}
+                        onChange={(e) => {
+                          const newSelected = new Set(selectedMembers);
+                          if (e.target.checked) {
+                            // If nothing was selected before, start fresh with just this one
+                            if (selectedMembers.size === 0) {
+                              newSelected.clear();
+                            }
+                            newSelected.add(workload.memberId);
+                          } else {
+                            newSelected.delete(workload.memberId);
+                          }
+                          setSelectedMembers(newSelected);
+                        }}
+                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <span className="text-sm flex-1">
+                        {workload.memberName}
+                        <span className="text-gray-400 text-xs ml-1">
+                          ({workload.tasks.length} task{workload.tasks.length !== 1 ? 's' : ''})
+                        </span>
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
             </div>
           )}
 
@@ -1135,32 +1239,65 @@ export default function ProjectTimeline({ initialTeamFilter, projectId, isPublic
           
           <div className="flex-1 overflow-auto" id="main-scroll-member">
             <div className="min-w-[1200px]">
-              {groupTasksByMember(projects).map((workload) => {
+              {groupTasksByMember(projects)
+                .filter(workload => selectedMembers.size === 0 || selectedMembers.has(workload.memberId))
+                .map((workload) => {
                 const memberConflicts = workload.tasks.filter(task => conflicts.has(task._id));
                 
                 return (
-                  <div key={workload.memberId} className="mb-8 border-2 border-gray-300 rounded-lg overflow-hidden">
+                  <div key={workload.memberId} className="mb-8 border-2 border-gray-300 rounded-lg overflow-hidden member-timeline-card" data-member-id={workload.memberId}>
                     {/* Member Header */}
-                    <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-4 flex items-center justify-between">
+                    <div className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white p-4 flex items-center justify-between print:bg-gray-800">
                       <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+                        <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center print:bg-gray-600">
                           <span className="text-2xl font-bold">
                             {workload.memberName.split(' ').map(n => n[0]).join('')}
                           </span>
                         </div>
                         <div>
                           <h3 className="text-xl font-bold">{workload.memberName}</h3>
-                          <p className="text-sm text-indigo-100">
+                          <p className="text-sm text-indigo-100 print:text-gray-300">
                             {workload.tasks.length} task{workload.tasks.length !== 1 ? 's' : ''} across {workload.projects.size} project{workload.projects.size !== 1 ? 's' : ''}
                           </p>
                         </div>
                       </div>
-                      {memberConflicts.length > 0 && (
-                        <div className="bg-red-500 text-white px-4 py-2 rounded-full font-bold flex items-center gap-2">
-                          <span className="text-2xl">⚠️</span>
-                          <span>{memberConflicts.length} Conflict{memberConflicts.length !== 1 ? 's' : ''}</span>
-                        </div>
-                      )}
+                      <div className="flex items-center gap-3">
+                        {/* Print Button */}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            // Hide all other member cards
+                            document.querySelectorAll('.member-timeline-card').forEach(card => {
+                              if (card.getAttribute('data-member-id') !== workload.memberId) {
+                                (card as HTMLElement).style.display = 'none';
+                              }
+                            });
+                            // Hide header controls
+                            const headerControls = document.querySelectorAll('.no-print');
+                            headerControls.forEach(el => (el as HTMLElement).style.display = 'none');
+                            // Trigger print
+                            window.print();
+                            // Restore visibility after print
+                            setTimeout(() => {
+                              document.querySelectorAll('.member-timeline-card').forEach(card => {
+                                (card as HTMLElement).style.display = '';
+                              });
+                              headerControls.forEach(el => (el as HTMLElement).style.display = '');
+                            }, 100);
+                          }}
+                          className="no-print bg-white/20 hover:bg-white/30 px-3 py-2 rounded-lg flex items-center gap-2 transition-colors"
+                          title="Print member timeline"
+                        >
+                          <span className="text-lg">🖨️</span>
+                          <span className="text-sm font-medium">Print</span>
+                        </button>
+                        {memberConflicts.length > 0 && (
+                          <div className="bg-red-500 text-white px-4 py-2 rounded-full font-bold flex items-center gap-2">
+                            <span className="text-2xl">⚠️</span>
+                            <span>{memberConflicts.length} Conflict{memberConflicts.length !== 1 ? 's' : ''}</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     {/* Conflict Warnings */}
@@ -1366,11 +1503,21 @@ export default function ProjectTimeline({ initialTeamFilter, projectId, isPublic
               );
             })}
 
-            {groupTasksByMember(projects).length === 0 && (
+            {groupTasksByMember(projects).filter(workload => selectedMembers.size === 0 || selectedMembers.has(workload.memberId)).length === 0 && (
               <div className="text-center py-16">
                 <p className="text-gray-500 text-lg">
-                  No team members with assigned tasks found.
+                  {selectedMembers.size > 0 
+                    ? 'No matching team members found.' 
+                    : 'No team members with assigned tasks found.'}
                 </p>
+                {selectedMembers.size > 0 && (
+                  <button
+                    onClick={() => setSelectedMembers(new Set())}
+                    className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  >
+                    Clear Filter
+                  </button>
+                )}
               </div>
             )}
           </div>
