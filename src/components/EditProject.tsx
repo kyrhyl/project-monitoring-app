@@ -274,7 +274,7 @@ const EditProject = ({ project, onUpdate, onCancel }: EditProjectProps) => {
           <h3 className="text-lg font-medium text-gray-900 mb-4">Timeline</h3>
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <p className="text-sm text-blue-800">
-              📅 Project dates are automatically calculated from task start and end dates.
+              💡 Project dates are automatically calculated from task start and end dates.
             </p>
           </div>
         </div>

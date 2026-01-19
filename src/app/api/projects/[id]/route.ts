@@ -174,6 +174,7 @@ export async function PUT(
           approvedBudgetContract: updateData.approvedBudgetContract || null,
           contractDuration: updateData.contractDuration ? String(updateData.contractDuration).trim() : null,
           fundingSource: updateData.fundingSource ? String(updateData.fundingSource).trim() : null,
+          remarks: updateData.remarks ? String(updateData.remarks).trim() : null,
           updatedAt: new Date()
         }
       },
