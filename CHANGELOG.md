@@ -33,18 +33,23 @@ All notable changes to this project will be documented in this file.
 4. This calculation happens server-side automatically via API
 5. Frontend displays calculated dates as read-only
 
-### TODO - Investigate Why Auto-Calculation Isn't Visible
-**User's actual issue:**
-- The dates calculated by `updateProjectDatesFromTasks()` are being saved to database (visible in API logs)
-- But these dates may not be showing properly in the UI
-- Need to verify that ProjectDetailsPage and EditProject properly display the auto-calculated dates
-- Timeline view calculates dates client-side for display but doesn't save them
+### ✅ COMPLETED - Reverted and Investigated Auto-Calculation
+**Investigation findings:**
+- The dates ARE being calculated by `updateProjectDatesFromTasks()` in `src/lib/updateProjectDates.ts`
+- Terminal logs show: "Updated project 6913d8909a131ecd4f3d9c27: { startDate: 2026-01-15, endDate: 2026-01-23, progress: 40 }"
+- Dates ARE being saved to database correctly
+- ProjectDetailsPage.tsx (line 349) DOES display the dates: `{project.startDate ? new Date(project.startDate).toLocaleDateString() : 'Not set'}`
+- EditProject.tsx now correctly shows info message about auto-calculation instead of manual fields
 
-**Next steps:**
-1. Revert EditProject.tsx to remove manual date fields
-2. Verify that auto-calculated dates from database are displayed in UI
-3. Check if there's a caching issue preventing updated dates from showing
-4. Ensure ProjectTimeline properly uses actualStartDate/actualEndDate from task calculations
+**How the system works (CORRECT DESIGN):**
+1. When tasks are created/updated/deleted, API routes call `updateProjectDatesFromTasks(projectId)`
+2. This function finds earliest task.startDate → project.startDate
+3. This function finds latest task.dueDate → project.endDate
+4. Dates are automatically saved to MongoDB
+5. UI displays these auto-calculated dates from the database
+6. Users should manage dates by editing TASKS, not the project itself
+
+**Commit hash:** 00e99fb - Reverted manual date field changes
 
 ---
 
