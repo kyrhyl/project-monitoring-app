@@ -177,13 +177,13 @@ export default function PublicProjectDetailPage({ params }: { params: Promise<{ 
               <div>
                 <label className="text-xs font-medium text-gray-500">Start Date</label>
                 <p className="text-sm text-gray-900 font-medium">
-                  {new Date(project.startDate).toLocaleDateString()}
+                  {project.startDate ? new Date(project.startDate).toLocaleDateString() : 'Not set'}
                 </p>
               </div>
               <div>
                 <label className="text-xs font-medium text-gray-500">End Date</label>
                 <p className="text-sm text-gray-900 font-medium">
-                  {project.endDate ? new Date(project.endDate).toLocaleDateString() : 'Ongoing'}
+                  {project.endDate ? new Date(project.endDate).toLocaleDateString() : 'Not set'}
                 </p>
               </div>
               <div>

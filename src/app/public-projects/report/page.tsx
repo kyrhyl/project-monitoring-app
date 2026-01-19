@@ -17,6 +17,7 @@ interface Project {
   appropriation?: string;
   priority?: string;
   progress?: number;
+  remarks?: string;
 }
 
 export default function ProjectReportPage() {
@@ -225,7 +226,7 @@ export default function ProjectReportPage() {
                       Start Date
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider border-r border-blue-500 w-28">
-                      End Date
+                      Due Date
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider w-80">
                       Remarks
@@ -274,7 +275,7 @@ export default function ProjectReportPage() {
                         {formatDate(project.endDate)}
                       </td>
                       <td className="px-4 py-3 text-xs text-gray-600">
-                        
+                        {project.remarks || 'N/A'}
                       </td>
                     </tr>
                   ))}
@@ -309,7 +310,7 @@ export default function ProjectReportPage() {
                     Start Date
                   </th>
                   <th className="border border-gray-400 px-3 py-3 text-left text-xs font-semibold uppercase" style={{width: '90px'}}>
-                    End Date
+                    Due Date
                   </th>
                   <th className="border border-gray-400 px-3 py-3 text-left text-xs font-semibold uppercase" style={{width: '250px'}}>
                     Remarks
@@ -346,7 +347,7 @@ export default function ProjectReportPage() {
                       {formatDate(project.endDate)}
                     </td>
                     <td className="border border-gray-400 px-3 py-2 text-xs">
-                      
+                      {project.remarks || 'N/A'}
                     </td>
                   </tr>
                 ))}

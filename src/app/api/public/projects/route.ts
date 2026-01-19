@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/mongodb';
 import Project from '@/models/Project';
+import User from '@/models/User';
 
 // Public interface for sanitized project data
 interface PublicProject {
@@ -32,6 +33,9 @@ interface PublicProject {
 export async function GET(request: NextRequest) {
   try {
     await dbConnect();
+    
+    // Ensure User model is registered for populate
+    User;
     
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');

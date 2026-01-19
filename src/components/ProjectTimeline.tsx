@@ -541,7 +541,7 @@ export default function ProjectTimeline({ initialTeamFilter, projectId, isPublic
 
     const totalDays = Math.ceil((dateRange.end.getTime() - dateRange.start.getTime()) / (1000 * 60 * 60 * 24));
     const startDays = Math.ceil((new Date(startDate).getTime() - dateRange.start.getTime()) / (1000 * 60 * 60 * 24));
-    const duration = Math.ceil((new Date(endDate).getTime() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24)) + 1; // +1 to include the end date
+    const duration = Math.ceil((new Date(endDate).getTime() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24));
 
     const left = (startDays / totalDays) * 100;
     const width = (duration / totalDays) * 100;
